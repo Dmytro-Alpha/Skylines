@@ -1,6 +1,5 @@
-from sqlalchemy.sql import ColumnElement, func
+from sqlalchemy.sql import ColumnElement
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.orm.properties import ColumnProperty
 
 
 class extract_field(ColumnElement):
@@ -27,8 +26,3 @@ class cast(ColumnElement):
 @compiles(cast)
 def compile(expr, compiler, **kw):
     return '(' + compiler.process(expr.base) + ')::' + expr.field
-
-
-class LowerCaseComparator(ColumnProperty.Comparator):
-    def __eq__(self, other):
-        return func.lower(self.__clause_element__()) == func.lower(other)

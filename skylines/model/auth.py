@@ -21,13 +21,12 @@ except ImportError:
              'Please install it. Example: easy_install hashlib')
 __all__ = ['User', 'Group', 'Permission']
 
-from sqlalchemy import Table, ForeignKey, Column, event, DDL
+from sqlalchemy import Table, ForeignKey, Column
 from sqlalchemy.types import Unicode, Integer, BigInteger, DateTime
-from sqlalchemy.orm import relation, synonym, column_property
+from sqlalchemy.orm import relation, synonym
 from sqlalchemy.dialects.postgresql import INET
 
 from skylines.model import DeclarativeBase, metadata, DBSession
-from skylines.lib.sql import LowerCaseComparator
 from tg import request
 
 #{ Association tables
@@ -107,11 +106,12 @@ class User(DeclarativeBase):
 
     user_id = Column(Integer, autoincrement=True, primary_key=True)
 
-    email_address = column_property(Column(Unicode(255),
-                                           info={'rum': {'field': 'Email'}}),
-                                    comparator_factory=LowerCaseComparator)
+    user_name = Column(Unicode(255), unique=True, nullable=False)
 
-    display_name = Column(Unicode(255), nullable=False)
+    email_address = Column(Unicode(255),
+                           info={'rum': {'field': 'Email'}})
+
+    display_name = Column(Unicode(255))
 
     _password = Column('password', Unicode(128),
                        info={'rum': {'field': 'Password'}})
@@ -141,11 +141,11 @@ class User(DeclarativeBase):
     #{ Special methods
 
     def __repr__(self):
-        return ('<User: email=%s, display=%s>' % (
-                self.email_address, self.display_name)).encode('utf-8')
+        return ('<User: name=%s, email=%s, display=%s>' % (
+                self.user_name, self.email_address, self.display_name)).encode('utf-8')
 
     def __unicode__(self):
-        return self.display_name
+        return self.display_name or self.user_name
 
     #{ Getters and setters
 
@@ -161,6 +161,11 @@ class User(DeclarativeBase):
     def by_email_address(cls, email):
         """Return the user object whose email address is ``email``."""
         return DBSession.query(cls).filter_by(email_address=email).first()
+
+    @classmethod
+    def by_user_name(cls, username):
+        """Return the user object whose user name is ``username``."""
+        return DBSession.query(cls).filter_by(user_name=username).first()
 
     @classmethod
     def by_tracking_key(cls, key):
@@ -248,11 +253,6 @@ class User(DeclarativeBase):
         '''
         from skylines.model.flight import Flight
         return Flight.get_largest().filter(Flight.pilot == self)
-
-
-event.listen(User.__table__, "after_create",
-             DDL("CREATE UNIQUE INDEX users_lower_email_address_idx ON tg_user(lower(email_address))"))
-
 
 class Permission(DeclarativeBase):
     """
