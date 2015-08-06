@@ -136,11 +136,14 @@ class TrackingController(BaseController):
 
         query = DBSession.query(TrackingFix) \
                 .filter(TrackingFix.id == subq.c.id) \
-                .filter(subq.c.rank == 1)
+                .filter(subq.c.rank == 1) \
+                .order_by(desc(TrackingFix.time))
 
         tracks = []
         for track in query.all():
-            tracks.append([track, Airport.by_location(track.location, None)])
+            airport = Airport.by_location(track.location, None)
+            distance = airport.distance(track.location)
+            tracks.append([track, airport, distance])
 
         return dict(tracks=tracks)
 
