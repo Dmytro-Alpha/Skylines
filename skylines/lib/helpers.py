@@ -8,7 +8,7 @@ from tg.flash import flash
 from datetime import timedelta
 
 from babel.dates import format_date, format_time, format_datetime
-from babel.numbers import format_number, format_decimal
+from babel.numbers import format_number
 
 
 def format_timedelta(delta):
