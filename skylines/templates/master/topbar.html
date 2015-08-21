@@ -1,7 +1,3 @@
-<?python
-from skylines.model.notification import count_unread_notifications
-?>
-
 <html xmlns:py="http://genshi.edgewall.org/"
       xmlns:xi="http://www.w3.org/2001/XInclude"
       py:strip="">
@@ -54,15 +50,6 @@ from skylines.model.notification import count_unread_notifications
                 </div>
               </form>
             </div>
-          </li>
-
-          <li py:if="request.identity"
-              py:with="notifications=count_unread_notifications(request.identity['user'])"
-              class="${(None, 'active')[defined('page') and page=='notifications']}">
-            <a href="/notifications/">
-              <span py:if="notifications == 0" class="badge" py:content="notifications">0</span>
-              <span py:if="notifications != 0" class="badge badge-warning" py:content="notifications">5</span>
-            </a>
           </li>
 
           <li py:if="request.identity" class="${(None, 'active')[defined('page') and page=='settings']} dropdown">

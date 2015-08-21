@@ -24,7 +24,6 @@ from sqlalchemy import func
 from repoze.what.predicates import not_anonymous, has_permission
 from skylines.model.geo import Location
 from datetime import date, timedelta
-from skylines.model.notification import create_follower_notification
 
 
 class ClubSelectField(PropertySingleSelectField):
@@ -375,7 +374,6 @@ class UserController(BaseController):
     @require(not_anonymous())
     def follow(self):
         Follower.follow(request.identity['user'], self.user)
-        create_follower_notification(self.user, request.identity['user'])
         redirect('.')
 
     @expose()
