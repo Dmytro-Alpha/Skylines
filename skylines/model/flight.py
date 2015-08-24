@@ -3,7 +3,7 @@
 from datetime import datetime
 from sqlalchemy.orm import relation
 from sqlalchemy import ForeignKey, Column, func
-from sqlalchemy.types import Unicode, Integer, DateTime, Date, Boolean
+from sqlalchemy.types import Unicode, Integer, DateTime, Boolean
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.sql.expression import desc
 from skylines.model.auth import User
@@ -34,9 +34,6 @@ class Flight(DeclarativeBase):
     model_id = Column(Integer, ForeignKey('models.id'))
     model = relation('Model', primaryjoin=(model_id == Model.id))
     registration = Column(Unicode(32))
-
-    # The date of the flight in local time instead of UTC. Used for scoring.
-    date_local = Column(Date, nullable=False, index=True)
 
     takeoff_time = Column(DateTime, nullable=False, index=True)
     landing_time = Column(DateTime, nullable=False)
@@ -69,11 +66,11 @@ class Flight(DeclarativeBase):
 
     @hybrid_property
     def year(self):
-        return self.date_local.year
+        return self.takeoff_time.year
 
     @year.expression
     def year(cls):
-        return func.date_part('year', cls.date_local)
+        return func.date_part('year', cls.takeoff_time)
 
     @property
     def takeoff_location(self):

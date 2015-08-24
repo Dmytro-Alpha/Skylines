@@ -12,6 +12,7 @@ from webob.exc import HTTPNotFound, HTTPForbidden
 from sqlalchemy.sql.expression import desc, or_, and_, between
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload, subqueryload, contains_eager
+from sqlalchemy.orm.util import aliased
 from tw.forms.fields import TextField
 from sprox.formbase import EditableForm
 from sprox.widgets import PropertySingleSelectField
@@ -357,19 +358,28 @@ class FlightController(BaseController):
 class FlightsController(BaseController):
     def __do_list(self, tab, kw, date=None, pilot=None, club=None, airport=None, \
                   pinned=None, filter=None, columns=None):
+        pilot_alias = aliased(User, name='pilot')
+        owner_alias = aliased(User, name='owner')
+
         flights = DBSession.query(Flight) \
             .outerjoin(Flight.igc_file) \
             .options(contains_eager(Flight.igc_file)) \
-            .options(joinedload(Flight.pilot)) \
+            .outerjoin(owner_alias, IGCFile.owner) \
+            .options(contains_eager(Flight.igc_file, IGCFile.owner, alias=owner_alias)) \
+            .outerjoin(pilot_alias, Flight.pilot) \
+            .options(contains_eager(Flight.pilot, alias=pilot_alias)) \
             .options(joinedload(Flight.co_pilot)) \
-            .options(joinedload(Flight.club)) \
-            .options(joinedload(Flight.takeoff_airport)) \
-            .options(joinedload(Flight.model)) \
+            .outerjoin(Flight.club) \
+            .options(contains_eager(Flight.club)) \
+            .outerjoin(Flight.takeoff_airport) \
+            .options(contains_eager(Flight.takeoff_airport)) \
+            .outerjoin(Flight.model) \
+            .options(contains_eager(Flight.model)) \
             .options(subqueryload(Flight.comments))
 
         if date:
-            flights = flights.filter(Flight.date_local == date)
-
+            flights = flights.filter(between(Flight.takeoff_time,
+                                             date, date + timedelta(days=1)))
         if pilot:
             flights = flights.filter(or_(Flight.pilot == pilot,
                                          Flight.co_pilot == pilot))
@@ -388,12 +398,12 @@ class FlightsController(BaseController):
         if request.response_type == 'application/json':
             if not columns:
                 columns = {
-                    0: 'date_local',
+                    0: 'takeoff_time',
                     1: 'olc_plus_score',
-                    2: 'display_name',
+                    2: 'pilot.display_name',
                     3: 'olc_classic_distance',
                     4: 'airports.name',
-                    5: 'flights.club_id',
+                    5: 'clubs.name',
                     6: 'models.name',
                     7: 'takeoff_time',
                     8: 'id',
@@ -406,8 +416,8 @@ class FlightsController(BaseController):
             for flight in flights:
                 aaData.append(dict(takeoff_time = flight.takeoff_time.strftime('%H:%M'),
                                    landing_time = flight.landing_time.strftime('%H:%M'),
-                                   date = flight.date_local.strftime('%d.%m.%Y'),
-                                   date_formatted = format_date(flight.date_local),
+                                   date = flight.takeoff_time.strftime('%d.%m.%Y'),
+                                   date_formatted = format_date(flight.takeoff_time),
                                    olc_plus_score = flight.olc_plus_score,
                                    olc_classic_distance = flight.olc_classic_distance,
                                    pilot_id = flight.pilot_id,
@@ -428,8 +438,10 @@ class FlightsController(BaseController):
             return dict(response_dict, aaData = aaData)
 
         else:
-            if not date:
-                flights = flights.order_by(desc(Flight.date_local))
+            if date:
+                flights = flights.order_by(desc(Flight.olc_plus_score))
+            else:
+                flights = flights.order_by(desc(Flight.takeoff_time))
 
             flights_count = flights.count()
             if flights_count > int(config.get('skylines.lists.server_side', 250)):
@@ -437,8 +449,7 @@ class FlightsController(BaseController):
             else:
                 limit = int(config.get('skylines.lists.server_side', 250))
 
-            flights = flights.order_by(desc(Flight.olc_plus_score))
-            flights = flights.limit(limit)
+            flights = flights.order_by(desc(Flight.takeoff_time)).limit(limit)
             return dict(tab = tab, date=date, pilot=pilot, club=club, airport=airport,
                         flights = flights, flights_count = flights_count)
 
@@ -468,7 +479,7 @@ class FlightsController(BaseController):
     @expose('skylines.templates.flights.list')
     @expose('json')
     def today(self, **kw):
-        query = DBSession.query(func.max(Flight.date_local).label('date')) \
+        query = DBSession.query(func.max(Flight.takeoff_time).label('date')) \
                          .filter(Flight.takeoff_time < datetime.utcnow())
 
         date = query.one().date
@@ -492,10 +503,10 @@ class FlightsController(BaseController):
 
         columns = {
             0: 'olc_plus_score',
-            1: 'display_name',
+            1: 'pilot.display_name',
             2: 'olc_classic_distance',
             3: 'airports.name',
-            4: 'flights.club_id',
+            4: 'clubs.name',
             5: 'models.name',
             6: 'takeoff_time',
             7: 'id',
@@ -540,9 +551,9 @@ class FlightsController(BaseController):
         pilot = get_requested_record(User, id)
 
         columns = {
-            0: 'date_local',
+            0: 'takeoff_time',
             1: 'olc_plus_score',
-            2: 'display_name',
+            2: 'pilot.display_name',
             3: 'olc_classic_distance',
             4: 'airports.name',
             5: 'models.name',
@@ -559,9 +570,9 @@ class FlightsController(BaseController):
         club = get_requested_record(Club, id)
 
         columns = {
-            0: 'date_local',
+            0: 'takeoff_time',
             1: 'olc_plus_score',
-            2: 'display_name',
+            2: 'pilot.display_name',
             3: 'olc_classic_distance',
             4: 'airports.name',
             5: 'models.name',
@@ -578,11 +589,11 @@ class FlightsController(BaseController):
         airport = get_requested_record(Airport, id)
 
         columns = {
-            0: 'date_local',
+            0: 'takeoff_time',
             1: 'olc_plus_score',
-            2: 'display_name',
+            2: 'pilot.display_name',
             3: 'olc_classic_distance',
-            4: 'flights.club_id',
+            4: 'clubs.name',
             5: 'models.name',
             6: 'takeoff_time',
             7: 'id',
