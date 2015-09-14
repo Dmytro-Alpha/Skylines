@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
 
-from sqlalchemy import ForeignKey, Column
+from datetime import datetime
+
+from sqlalchemy import ForeignKey, Column, event, DDL
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.orm import relation, backref
 from sqlalchemy.types import String, Integer, DateTime, Interval
-from sqlalchemy.schema import Index
 from geoalchemy import WKTSpatialElement
 from geoalchemy.geometry import GeometryColumn, LineString, GeometryDDL
 from geoalchemy.postgis import PGComparator
@@ -54,13 +55,14 @@ class Trace(DeclarativeBase):
 
     @locations.setter
     def locations(self, locations):
-        points = ['{} {}'.format(location.longitude, location.latitude)
-                  for location in locations]
+        points = []
+        for location in locations:
+            points.append('{} {}'.format(location.longitude, location.latitude))
+
         wkt = "LINESTRING({})".format(','.join(points))
         self._locations = WKTSpatialElement(wkt)
 
 GeometryDDL(Trace.__table__)
 
-Index('traces_contest_idx',
-      Trace.flight_id, Trace.contest_type, Trace.trace_type,
-      unique=True)
+event.listen(Trace.__table__, "after_create",
+             DDL("CREATE UNIQUE INDEX traces_contest_idx ON traces(flight_id, contest_type, trace_type)"))
