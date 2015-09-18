@@ -5,32 +5,9 @@
  */
 var flights = [];
 
+var flot;
 
-/**
- * primary_flight
- *
- * Defines which flight should be handled first
- */
-var primary_flight = 0;
-
-
-/**
- * barogram
- *
- * Holds the Raphael instance
- */
-var barogram;
-
-/**
- * barogram_t, barogram_h and barogram_enl
- *
- * {Array(Array(double))} - contains time, height and enl values for the barogram.
- */
-var barogram_t = [];
-var barogram_h = [];
-var barogram_enl = [];
-var barogram_markers = [];
-
+var highlighted_flight_sfid;
 
 /**
  * colors
@@ -108,7 +85,48 @@ function initFlightLayer() {
   map.events.register("move", this, function() {
     initRedrawLayer(flightPathLayer);
   });
+
+  map.events.register("moveend", this, updateFlotScale);
 };
+
+function updateFlotScale() {
+  var first_t = 999999;
+  var last_t = 0;
+
+  // circle throu all flights
+  for (var fid = 0; fid < flights.length; fid++) {
+    var flight = flights[fid];
+
+    // if flight is not in viewport continue.
+    if (flight.geo.partitionedGeometries.length == 0)
+      continue;
+
+    // show barogram of all trace parts visible
+    var length = flight.geo.partitionedGeometries.length;
+    var comp_length = flight.geo.partitionedGeometries[length-1].components.length;
+    var first = flight.geo.partitionedGeometries[0].components[0].originalIndex;
+    var last = flight.geo.partitionedGeometries[length-1].components[comp_length-1].originalIndex;
+
+    // get first and last time which should be the bounds of the barogram
+    if (flight.t[first] < first_t)
+      first_t = flight.t[first];
+
+    if (flight.t[last] > last_t)
+     last_t = flight.t[last];
+  }
+
+  var opt = flot.getOptions();
+  opt.yaxes[0].min = opt.yaxes[0].max = null;
+  if (last_t == 0) {
+    opt.xaxes[0].min = opt.xaxes[0].max = null;
+  } else {
+    opt.xaxes[0].min = first_t * 1000;
+    opt.xaxes[0].max = last_t * 1000;
+  }
+
+  flot.setupGrid();
+  flot.draw();
+}
 
 /**
  * Function: initRedrawLayer
@@ -156,7 +174,7 @@ function addFlight(sfid, _lonlat, _levels, _num_levels, _time, _height, _enl, zo
   var points = new Array();
   for (var i = 0, len = lonlat.length; i < len; i++) {
     points.push(new OpenLayers.Geometry.Point(lonlat[i].lon, lonlat[i].lat).
-      transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()) );
+      transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject()));
   }
 
   // add new flight
@@ -193,6 +211,40 @@ function addFlight(sfid, _lonlat, _levels, _num_levels, _time, _height, _enl, zo
     }
   }
 
+  var flot_h = [], flot_enl = [];
+  for (var i = 0; i < time.length; i++) {
+      var timestamp = time[i] * 1000;
+      flot_h.push([timestamp, height[i]]);
+      flot_enl.push([timestamp, enl[i]]);
+  }
+
+  var table_row = $(
+    "<tr>" +
+    "<td><span class=\"badge\" style=\"background: " + color + ";\"></span></td>" +
+    "<td>--:--:--</td>" +
+    "<td>--</td>" +
+    "<td>--</td>" +
+    "<td>--</td>" +
+    "</tr>");
+
+
+  table_row.bind('hover', function(e) {
+    if (flights.length > 1)
+      $(this).css("cursor", "pointer");
+  });
+
+  table_row.bind('click', function(e) {
+    if (flights.length <= 1)
+      return;
+
+    if (highlighted_flight_sfid == sfid)
+      clearHighlight();
+    else
+      setHighlight(sfid);
+  });
+
+  $("#fix-data").append(table_row);
+
   flights.push({
     lonlat: lonlat,
     t: time,
@@ -202,21 +254,15 @@ function addFlight(sfid, _lonlat, _levels, _num_levels, _time, _height, _enl, zo
     color: color,
     plane: plane,
     sfid: sfid,
-    index: 0,
-    dx: 0,
     last_update: time[time.length - 1],
     contests: contests,
-    markers: markers
+    markers: markers,
+    table_row: table_row,
+    flot_h: flot_h,
+    flot_enl: flot_enl
   });
 
-  var i = flights.length - 1;
-
-  barogram_t.push(flights[i].t);
-  barogram_h.push(flights[i].h);
-  barogram_enl.push(flights[i].enl);
-  barogram_markers.push(flights[i].markers);
-
-  return i;
+  updateFlotData();
 };
 
 /**
@@ -232,13 +278,11 @@ function addFlightFromJSON(url) {
         if (flights[flight_id].sfid == data.sfid) return;
       }
 
-      var flight_id = addFlight(data.sfid, data.encoded.points, data.encoded.levels,
-                                data.num_levels, data.barogram_t, data.barogram_h,
-                                data.enl, data.zoom_levels, data.contests);
+      addFlight(data.sfid, data.encoded.points, data.encoded.levels,
+                data.num_levels, data.barogram_t, data.barogram_h,
+                data.enl, data.zoom_levels, data.contests);
 
       initRedrawLayer(map.getLayersByName("Flight")[0]);
-      $.proxy(updateBarogram, { reset_y_axis: true })();
-      setPrimaryFlight(flight_id);
     }
   });
 };
@@ -352,412 +396,348 @@ function formatSecondsAsTime(seconds) {
   return pad(h,2) + ":" + pad(m,2) + ":" + pad(s,2); // Format the result into time strings
 }
 
-
-/**
- * Function: setIndexFromTime
- *
- * Set index and dx for the current time in each flight
- */
-function setIndexFromTime(time) {
-  for (var fid = 0; fid < flights.length; fid++) {
-    var flight = flights[fid];
-
-    if (time < flight.t[0] || time > flight.t[flight.t.length-1]) {
-      // out of range
-      flight.dx = 0;
-      flight.index = -1;
-      continue;
-    }
-
-    var index = getNextSmallerIndex(flight.t, time);
-
-    if ((flight.t[index+1] - flight.t[index]) != 0) {
-      flight.dx = (time - flight.t[index])/(flight.t[index+1] - flight.t[index]);
-      flight.index = index;
-    } else {
-      flight.dx = 0;
-      flight.index = index;
-    }
-  }
-}
-
-
-/**
- * Function: setFlightAndTime
- *
- * Set the map time and primary flight
- */
-function setFlightAndTime(time, new_primary) {
-  // hide all planes
-  hidePlanePosition();
-  barogram.linechart.hoverColumn.position.hide();
-
-  // find the position indexes of all flight available.
-  setIndexFromTime(time);
-
-  // set the desired primary flight
-  if (typeof new_primary === 'number') setPrimaryFlight(new_primary);
-  // else keep the old one
-  else setPrimaryFlight(primary_flight);
-
-  // no flight found which is in range? return early, draw nothing.
-  if (flights[primary_flight].index == -1) return;
-
-  // interpolate current height of primary_flight
-  var height = flights[primary_flight].h[flights[primary_flight].index] +
-    (flights[primary_flight].h[flights[primary_flight].index+1] - flights[primary_flight].h[flights[primary_flight].index]) *
-     flights[primary_flight].dx;
-
-  // calculate y-position of position marker for current primary_flight and show marker
-  var prop = barogram.linechart.getProperties();
-  var rel_x = (time - prop.minx) * prop.kx + prop.x + prop.gutter;
-  var rel_y = prop.y - (height - prop.miny) * prop.ky + prop.height - prop.gutter;
-  barogram.linechart.hoverColumn(flights[primary_flight].index, rel_x, rel_y, primary_flight);
-
-  // draw plane icons on map
-  for (var fid = 0; fid < flights.length; fid++) {
-    // do not show plane if out of range.
-    if (flights[fid].index == -1) continue;
-
-    showPlanePosition(flights[fid].index, flights[fid].dx, fid, (fid!=primary_flight));
-  }
-}
-
-/**
- * Function: setPrimaryFlight
- *
- * Sets the primary flight. Try to set it to primary, fallback to another flight
- *
- * Parameters:
- * primary - {Integer} primary flight
- */
-function setPrimaryFlight(primary) {
-  // we'd like to have an flight within the current range as primary_flight.
-  if (flights[primary].index == -1) {
-    // our current primary flight is out of range. find first flight in range...
-    for (primary = 0; primary < flights.length - 1; primary++) {
-      if (flights[primary].index != -1) break;
-    }
-  }
-
-  // the primary flight has changed...
-  if (primary_flight != primary) {
-    // update barogram and set primary_flight if it changed
-    barogram.linechart.setPrimary(primary);
-
-    var old_contest_traces = map.getLayersByName("Flight")[0].getFeaturesByAttribute("sfid", flights[primary_flight].sfid);
-    var new_contest_traces = map.getLayersByName("Flight")[0].getFeaturesByAttribute("sfid", flights[primary].sfid);
-
-    for (var i = 0; i < old_contest_traces.length; i++) {
-      old_contest_traces[i].renderIntent = 'hidden';
-      old_contest_traces[i].layer.drawFeature(old_contest_traces[i]);
-    }
-
-    for (var i = 0; i < new_contest_traces.length; i++) {
-      new_contest_traces[i].renderIntent = 'contest';
-      new_contest_traces[i].layer.drawFeature(new_contest_traces[i]);
-    }
-    primary_flight = primary;
-  }
-}
-
-/**
- * Function: render_barogram
- *
- * Initialize Raphael Linechart, handle it's mouseover events.
- *
- * Parameters:
- * element - {Object} jQuery container object for barogram.
- */
-
-function render_barogram(element) {
-  // create Raphael instance and draw linechart.
-  barogram = Raphael("barogram", "100%", "100%");
-  var linechart = barogram.linechart(30, 10,
-                      element.innerWidth() - 50, element.innerHeight() - 20,
-                      barogram_t,
-                      barogram_h,
-                      { axis: "0 0 1 1",
-                        axisxstep: 8,
-                        axisxfunc: formatSecondsAsTime,
-                        colors: colors,
-                        width: 1.5,
-                        stripes: {
-                          y: barogram_enl,
-                          range: 999,
-                          height: element.innerHeight() - 40,
-                          visible: !($.browser.msie && (parseInt($.browser.version, 10) < 9)) },
-                        markers: barogram_markers });
-
-  // create position marker and it's elements.
-  var position = barogram.set().hide();
-
-  var hoverLine = barogram.path().attr({
-    stroke: '#a22',
-    'stroke-width': 2
-  }).hide();
-
-  var text = barogram.text().hide();
-
-  var textRect = barogram.rect().attr({
-    fill: '#fff',
-    opacity: .8,
-    stroke: '#999',
-    r: 3
-  }).hide();
-
-  var hoverCircle = barogram.circle().attr({
-    stroke: '#a22',
-    'stroke-width': 2,
-    r: 6
-  }).hide();
-
-  position.push(hoverLine);
-  position.push(hoverCircle);
-  position.push(textRect.insertAfter(hoverCircle));
-  position.push(text.insertAfter(textRect));
-
-  // create mouse_container overlay over linechart. fixes some bugs in browsers
-  // where no mouseout events where fired when the mouse leaves the linechart.
-  var mouse_container = $("<div></div>");
-  mouse_container.css({
-    width: element.innerWidth(),
-    height: element.innerHeight(),
-    'top': 0,
-    'left': 0,
-    position: 'absolute',
-    opacity: 0,
-    'background-color': '#fff'
+function initFlot(element) {
+  flot = $.plot(element, [], {
+      grid: {
+        borderWidth: 0,
+        hoverable: true,
+        autoHighlight: false,
+        margin: 5
+      },
+      xaxis: {
+        mode: "time",
+        timeformat: "%H:%M"
+      },
+      yaxes: [{}, {
+        show: false,
+        min: 0,
+        max: 1000
+      }],
+      crosshair: {
+        mode: "x"
+      }
   });
-  element.append(mouse_container);
 
-  // add mousemove function.
-  // Run this function only every 25ms to save some computing power.
   var mouse_container_running = false;
-  mouse_container.mousemove(function(e) {
-    // call this function only every 25ms, else return early
-    if (mouse_container_running) return;
+  element.bind('plothover', function(event, pos, item) {
+    if (mouse_container_running)
+      return;
+
     mouse_container_running = true;
-    setTimeout(function() { mouse_container_running = false; }, 25);
 
-    var prop = linechart.getProperties();
-    var kx_inv = 1 / prop.kx;
-    var rel_x = e.clientX - mouse_container.offset().left;
-    var x = prop.minx + (rel_x - prop.x - prop.gutter) * kx_inv;
-    if (x < prop.minx || x > prop.maxx) return;
+    setTimeout(function() {
+      mouse_container_running = false;
+    }, 25);
 
-    // set the map time to x
-    setFlightAndTime(x);
+    setTime(pos.x / 1000);
+  }).bind('mouseout', function(event) {
+    setTime(null);
   });
+}
 
-  // hide everything on mouse out
-  mouse_container.mouseout(function(e) {
-    hidePlanePosition();
-    position && position.hide();
-  });
+function updateFlotData() {
+  var highlighted = flightWithSFID(highlighted_flight_sfid);
 
-  var enl_label = $("<span>ENL</span>");
-  enl_label.css({
-    'top': 12,
-    'right': 2,
-    position: 'absolute',
-    color: linechart.getStripesState() ? '#ffbf29' : '#aaa',
-    'font-weight': 'bold',
-    cursor: 'pointer'
-  }).tooltip({
-    placement: 'left',
-    title: 'Click to toggle ENL display'
-  }).click(function(e) {
-    linechart.toggleStripes();
-    $(this).css({ color: linechart.getStripesState() ? '#ffbf29' : '#aaa' });
-  });
-  element.append(enl_label);
+  var data = [];
+  for (var id = 0; id < flights.length; id++) {
+    var flight = flights[id];
 
-  // update the position marker at index in flight fid. x and y are relative to the linechart viewport.
-  var hoverColumn = function(index, x, y, fid) {
-    position.toFront();
-    var attrs = linechart.getProperties();
+    // Don't draw highlighted flight yet because it should be on top
+    if (highlighted && flight.sfid == highlighted.sfid)
+      continue;
 
-    hoverLine.attr({ path:
-      ["M", x, attrs.height,
-       "v", -(attrs.height - y) + 6,
-       "M", x, 14,
-       "v", y - 20]
+    var color = flight.color;
+    if (highlighted)
+      // Fade out line color if another flight is highlighted
+      color = $.color.parse(color).add('a', -0.6).toString()
+
+    data.push({
+      data: flight.flot_h,
+      color: color
     });
 
-    hoverCircle.attr({
-      cx: x,
-      cy: y
-    });
-
-    var vario = null;
-    if (flights[fid].t[index+1] != undefined) {
-      vario = (flights[fid].h[index+1] - flights[fid].h[index]) / (flights[fid].t[index+1] - flights[fid].t[index]);
-    }
-
-    var speed = null;
-    if (flights[fid].t[index+1] != undefined) {
-      speed = OpenLayers.Util.distVincenty(flights[fid].lonlat[index+1], flights[fid].lonlat[index]);
-      speed *= 1000;
-      speed /= (flights[fid].t[index+1] - flights[fid].t[index]);
-    }
-
-    text.attr({
-      x: x,
-      y: attrs.height - 20,
-      text: Math.round(flights[fid].h[index]) + " m" +
-            ((vario !== null)?"\n" + (Math.round(vario*10)/10) + " m/s":"") +
-            ((speed !== null)?"\n" + (Math.round(speed*3.6*10)/10) + " km/h":"") +
-            "\n" + formatSecondsAsTime(flights[fid].t[index + ((flights[fid].dx>=1)?1:0)])
-    });
-
-    textRect.attr({
-      x: x - 60/2,
-      y: attrs.height - 20 - 54/2,
-      width: 60,
-      height: 54
-    });
-/*
-    var textBBox = text.getBBox();
-    textRect.attr({
-      x: textBBox.x - 2,
-      y: textBBox.y - 2,
-      width: textBBox.width + 4,
-      height: textBBox.height + 4
-    });
-*/
-    position.show();
-  };
-
-  hoverColumn.position = position;
-  linechart.hoverColumn = hoverColumn;
-  barogram.linechart = linechart;
-
-  $(window).resize(function() {
-    var attrs = linechart.getProperties();
-    if (element.innerWidth() - 50 != attrs.width ||
-        element.innerHeight() - 20 != attrs.height) {
-      linechart.resetSize(element.innerWidth() - 50, element.innerHeight() - 20);
-      mouse_container.css({
-        width: element.innerWidth(),
-        height: element.innerHeight(),
+    // Don't show other flight's ENL if a flight is highlighted
+    if (!highlighted)
+      data.push({
+        data: flight.flot_enl,
+        color: flight.color,
+        lines: {
+          lineWidth: 0,
+          fill: 0.2
+        },
+        yaxis: 2
       });
+  }
+
+  if (highlighted) {
+    data.push({
+      data: highlighted.flot_h,
+      color: highlighted.color
+    });
+
+    data.push({
+      data: highlighted.flot_enl,
+      color: highlighted.color,
+      lines: {
+        lineWidth: 0,
+        fill: 0.2
+      },
+      yaxis: 2
+    });
+  }
+
+  var options = flot.getOptions();
+  var markings = [];
+
+  var contests;
+  if (flights.length == 1)
+    contests = flights[0].contests;
+  else if (highlighted)
+    contests = highlighted.contests;
+
+  if (contests) {
+    for (var i = 0; i < contests.length; ++i) {
+      var contest = contests[i];
+      var times = contest.times;
+      var color = contest_colors[contest.name];
+
+      for (var j = 0; j < times.length; ++j) {
+        var time = times[j] * 1000;
+        markings.push({
+          lineWidth: 2,
+          color: color,
+          xaxis: {
+            from: time,
+            to: time
+          }
+        });
+      }
+    }
+  }
+
+  options.grid.markings = markings;
+
+  flot.setData(data);
+  flot.setupGrid();
+  flot.draw();
+}
+
+function setTime(time) {
+  // remove plane icons from map
+  hideAllPlanesOnMap();
+
+  // if the mouse is not hovering over the barogram or any trail on the map
+  if (!time) {
+    // remove crosshair from barogram
+    flot.clearCrosshair();
+
+    // remove data from fix-data table
+    clearFixDataTable();
+
+    return;
+  }
+
+  // update barogram crosshair
+  flot.lockCrosshair({x: time * 1000});
+
+  for (var id = 0; id < flights.length; id++) {
+    // calculate fix data
+    fix_data = getFixData(id, time);
+    if (!fix_data) {
+      // update map
+      hidePlaneOnMap(id);
+
+      // update fix-data table
+      clearFixDataTableRow(id);
+    } else {
+      // update map
+      setPlaneOnMap(id, fix_data);
+
+      // update fix-data table
+      updateFixDataTableRow(id, fix_data);
+    }
+  }
+}
+
+function getFixData(id, time) {
+  var flight = flights[id];
+
+  if (time < flight.t[0] || time > flight.t[flight.t.length-1])
+    return null;
+
+  var index = getNextSmallerIndex(flight.t, time);
+  if (index < 0 || index >= flight.t.length - 1 ||
+      flight.t[index] == undefined || flight.t[index + 1] == undefined)
+    return null;
+
+  var t_prev = flight.t[index];
+  var t_next = flight.t[index + 1];
+  var dt_total = t_next - t_prev;
+  var dt_rel = 0;
+
+  if (dt_total != 0)
+    dt_rel = (time - flight.t[index]) / dt_total;
+
+  var fix_data = {};
+
+  fix_data["time"] = t_prev;
+
+  var loc_prev = flights[id].lonlat[index];
+  var loc_next = flights[id].lonlat[index + 1];
+
+  var lon_prev = loc_prev.lon, lat_prev = loc_prev.lat;
+  var lon_next = loc_next.lon, lat_next = loc_next.lat;
+
+  fix_data["lon"] = lon_prev + (lon_next - lon_prev) * dt_rel;
+  fix_data["lat"] = lat_prev + (lat_next - lat_prev) * dt_rel;
+
+  fix_data["heading"] = Math.atan2(lon_next - lon_prev,
+                                   lat_next - lat_prev) * 180 / Math.PI;
+
+  if (dt_total != 0)
+    fix_data["speed"] = OpenLayers.Util.distVincenty(loc_next, loc_prev) * 1000 / dt_total;
+
+  var h_prev = flights[id].h[index];
+  var h_next = flights[id].h[index + 1];
+
+  fix_data["alt-msl"] = h_prev;
+
+  if (dt_total != 0)
+    fix_data["vario"] = (h_next - h_prev) / dt_total;
+
+  return fix_data;
+}
+
+function setPlaneOnMap(id, fix_data) {
+  // set plane location
+  var loc = new OpenLayers.Geometry.Point(fix_data["lon"], fix_data["lat"]);
+  loc.transform(new OpenLayers.Projection("EPSG:4326"),
+                map.getProjectionObject());
+  flights[id].plane.geometry = loc;
+
+  // set plane heading
+  // <heading> in degrees
+  flights[id].plane.attributes.rotation = fix_data["heading"];
+
+  // add plane to map
+  map.getLayersByName("Flight")[0].addFeatures(flights[id].plane);
+}
+
+function hidePlaneOnMap(id) {
+  map.getLayersByName("Flight")[0].removeFeatures(flights[id].plane);
+}
+
+function hideAllPlanesOnMap() {
+  var layer = map.getLayersByName("Flight")[0];
+  for (var id = 0; id < flights.length; id++)
+    layer.removeFeatures(flights[id].plane);
+}
+
+function updateFixDataTableRow(id, fix_data) {
+  flights[id].table_row.find("td").each(function(index, cell) {
+    switch (index) {
+    case 0:
+      return;
+    case 1:
+      var html = formatSecondsAsTime(fix_data["time"]);
+      $(cell).html(html);
+      break;
+    case 2:
+      var html = Math.round(fix_data["alt-msl"]) + " m";
+      $(cell).html(html);
+      break;
+    case 3:
+      if (fix_data["vario"] !== undefined) {
+        var html = (fix_data["vario"]).toFixed(1) + " m/s";
+        if (fix_data["vario"] >= 0)
+          html = "+" + html;
+
+        $(cell).html(html);
+      } else {
+        $(cell).html("--");
+      }
+      break;
+    case 4:
+      if (fix_data["speed"] !== undefined) {
+        var html = (fix_data["speed"] * 3.6).toFixed(1) + " km/h";
+        $(cell).html(html);
+      } else {
+        $(cell).html("--");
+      }
+      break;
     }
   });
 }
 
-
-/**
- * Function: showPlanePosition
- *
- * Show a aircraft icon on the map.
- *
- * Parameters:
- * id - {int} index of vector where the aircraft is
- * dx - {double} delta between id and id+1 to draw aircraft
- * fid - {int} flight id to use
- */
-
-function showPlanePosition(id, dx, fid, ghost) {
-
-  flights[fid].plane.attributes.rotation = 180/Math.PI *
-    Math.atan2(flights[fid].lonlat[id+1].lon-flights[fid].lonlat[id].lon,
-               flights[fid].lonlat[id+1].lat-flights[fid].lonlat[id].lat);
-
-  var lon = flights[fid].lonlat[id].lon + (flights[fid].lonlat[id+1].lon - flights[fid].lonlat[id].lon)*dx;
-  var lat = flights[fid].lonlat[id].lat + (flights[fid].lonlat[id+1].lat - flights[fid].lonlat[id].lat)*dx;
-
-  flights[fid].plane.attributes.ghost = ghost?true:false;
-  flights[fid].plane.geometry = new OpenLayers.Geometry.Point(lon, lat).
-    transform(new OpenLayers.Projection("EPSG:4326"), map.getProjectionObject());
-
-  map.getLayersByName("Flight")[0].addFeatures(flights[fid].plane);
-}
-
-
-/**
- * Function: hidePlanePosition
- *
- * Hides all aircrafts drawn on the map
- */
-
-function hidePlanePosition() {
-  for (var fid = 0; fid < flights.length; fid++) {
-    map.getLayersByName("Flight")[0].removeFeatures(flights[fid].plane);
-  }
-}
-
-
-/**
- * Function: scaleBarogram
- *
- * Scale the linechart according to the visible flight tracks on the map
- */
-
-function scaleBarogram() {
-  // update barogram linechart whenever the map has been moved.
-  map.events.register("moveend", this, updateBarogram);
-}
-
-function updateBarogram(e) {
-  var linechart = barogram.linechart;
-  var reset_y_axis = this.reset_y_axis || false;
-
-  var total_first = [];
-  var total_last = [];
-  var first_t = 999999;
-  var last_t = 0;
-
-  // circle throu all flights
-  for (var fid = 0; fid < flights.length; fid++) {
-    var flight = flights[fid];
-
-    // if flight is not in viewport continue.
-    if (flight.geo.partitionedGeometries.length == 0) continue;
-
-    // show barogram of all trace parts visible
-    var length = flight.geo.partitionedGeometries.length;
-    var comp_length = flight.geo.partitionedGeometries[length-1].components.length;
-    var first = flight.geo.partitionedGeometries[0].components[0].originalIndex;
-    var last = flight.geo.partitionedGeometries[length-1].components[comp_length-1].originalIndex;
-
-    // get first and last time which should be the bounds of the barogram
-    if (flight.t[first] < first_t)
-      first_t = flight.t[first];
-
-    if (flight.t[last] > last_t)
-     last_t = flight.t[last];
-  }
-
-  // is there any flight in our viewport?
-  var none_in_range = true;
-
-  for (var fid = 0; fid < flights.length; fid++) {
-    var flight = flights[fid];
-
-    // get indices of flight path between first_t(ime) and last_t(ime)
-    var first = getNextSmallerIndex(flight.t, first_t);
-    var last = getNextSmallerIndex(flight.t, last_t);
-
-    if (flight.t[first] > last_t || flight.t[last] < first_t) {
-      // current flight is out of range. don't show it in barogram...
-      total_first.push(-1);
-      total_last.push(-1);
-    } else {
-      total_first.push(first);
-      total_last.push(last + 1);
-      none_in_range = false;
+function clearFixDataTableRow(id, fix_data) {
+  flights[id].table_row.find("td").each(function(index, cell) {
+    switch (index) {
+    case 0:
+      return;
+    case 1:
+      $(cell).html("--:--:--");
+      break;
+    default:
+      $(cell).html("--");
+      break;
     }
+  });
+}
+
+function clearFixDataTable() {
+  for (var id = 0; id < flights.length; id++)
+    clearFixDataTableRow(id);
+}
+
+function flightWithSFID(sfid) {
+  for (var id = 0; id < flights.length; id++) {
+    var flight = flights[id];
+    if (flight.sfid == sfid)
+      return flight;
   }
 
-  if (none_in_range)
-    // reset linechart zoom when no flight is visible in viewport
-    linechart.zoomReset(reset_y_axis);
-  else
-    // zoom linechart
-    linechart.zoomInto(total_first, total_last, reset_y_axis);
-};
+  return null;
+}
 
+function clearHighlight(defer_update) {
+  if (!highlighted_flight_sfid)
+    return;
+
+  // Find currently highlighted flight
+  var flight = flightWithSFID(highlighted_flight_sfid);
+  if (flight)
+    // Removed table row styling for selected flight
+    flight.table_row.removeClass("selected");
+
+  // Unset the highlighted sfid variable
+  highlighted_flight_sfid = undefined;
+
+  // Unless specifically deferred update the barogram
+  if (defer_update != true)
+    updateFlotData();
+}
+
+function setHighlight(sfid) {
+  if (highlighted_flight_sfid == sfid)
+    return;
+
+  // Clear the currently highlighted flight
+  clearHighlight(true);
+
+  // Find flight that should be highlighted now
+  var flight = flightWithSFID(sfid);
+  if (!flight)
+    return;
+
+  // Add table row styling
+  flight.table_row.addClass("selected");
+
+  // Save highlighted status
+  highlighted_flight_sfid = sfid;
+
+  // Update barogram
+  updateFlotData();
+}
 
 /**
  * Function: hoverMap
@@ -766,8 +746,6 @@ function updateBarogram(e) {
  */
 
 function hoverMap() {
-  var linechart = barogram.linechart;
-
   // search on every mousemove over the map viewport. Run this function only
   // every 25ms to save some computing power.
   var running = false;
@@ -793,16 +771,13 @@ function hoverMap() {
     // a position marker on the linechart.
     if (nearest !== null) {
       // calculate time
-      var prop = linechart.getProperties();
       var x = flights[nearest.fid].t[nearest.from] + (flights[nearest.fid].t[nearest.from+1]-flights[nearest.fid].t[nearest.from])*nearest.along;
 
       // set the map time to x
-      setFlightAndTime(x, nearest.fid);
-
+      setTime(x);
     } else {
       // hide everything
-      hidePlanePosition();
-      linechart.hoverColumn.position.hide();
+      setTime(null);
     }
   });
 }
