@@ -3,7 +3,6 @@
 from datetime import datetime, timedelta
 from math import log
 from tg import expose, request, cache
-from tg.decorators import with_trailing_slash
 from webob.exc import HTTPNotFound
 from sqlalchemy import func, over
 from sqlalchemy.sql.expression import and_, desc, cast
@@ -15,7 +14,7 @@ from skylines.model import DBSession, User, TrackingFix, Airport
 from skylinespolyencode import SkyLinesPolyEncoder
 
 
-def get_flight_path2(pilot, last_update=None):
+def get_flight_path2(pilot, last_update = None):
     query = DBSession.query(TrackingFix)
     query = query.filter(and_(TrackingFix.pilot == pilot,
                               TrackingFix.location != None,
@@ -50,8 +49,8 @@ def get_flight_path2(pilot, last_update=None):
     return result
 
 
-def get_flight_path(pilot, threshold=0.001, last_update=None):
-    fp = get_flight_path2(pilot, last_update=last_update)
+def get_flight_path(pilot, threshold = 0.001, last_update = None):
+    fp = get_flight_path2(pilot, last_update = last_update)
     if fp is None or len(fp) == 0:
         return None
 
@@ -81,7 +80,7 @@ def get_flight_path(pilot, threshold=0.001, last_update=None):
     barogram_h = encoder.encodeList([fp[i][3] for i in range(len(fp)) if fixes['levels'][i] != -1])
     enl = encoder.encodeList([fp[i][4] or 0 for i in range(len(fp)) if fixes['levels'][i] != -1])
 
-    return dict(encoded=encoded, zoom_levels=zoom_levels, fixes=fixes,
+    return dict(encoded=encoded, zoom_levels = zoom_levels, fixes = fixes,
                 barogram_t=barogram_t, barogram_h=barogram_h, enl=enl)
 
 
@@ -97,7 +96,6 @@ class TrackController(BaseController):
     def __get_flight_path(self, **kw):
         return get_flight_path(self.pilot, **kw)
 
-    @with_trailing_slash
     @expose('skylines.templates.tracking.view')
     def index(self):
         other_pilots = []
@@ -131,18 +129,18 @@ class TrackController(BaseController):
         if trace is None:
             raise HTTPNotFound
 
-        return dict(encoded=trace['encoded'], num_levels=trace['fixes']['numLevels'],
-                    barogram_t=trace['barogram_t'], barogram_h=trace['barogram_h'],
-                    enl=trace['enl'], sfid=self.pilot.id)
+        return  dict(encoded=trace['encoded'], num_levels=trace['fixes']['numLevels'],
+                     barogram_t=trace['barogram_t'], barogram_h=trace['barogram_h'],
+                     enl=trace['enl'], sfid=self.pilot.id)
 
 
 class TrackingController(BaseController):
     @expose('skylines.templates.tracking.list')
     def index(self, **kw):
         subq = DBSession.query(TrackingFix.id,
-                               over(func.row_number(),
+                               over(func.rank(),
                                     partition_by=TrackingFix.pilot_id,
-                                    order_by=desc(TrackingFix.time)).label('row_number')) \
+                                    order_by=desc(TrackingFix.time)).label('rank')) \
                 .outerjoin(TrackingFix.pilot) \
                 .filter(TrackingFix.time >= datetime.utcnow() - timedelta(hours=6)) \
                 .filter(TrackingFix.time <= datetime.utcnow() - cast(cast(User.tracking_delay, String()) + ' minutes', Interval)) \
@@ -152,7 +150,7 @@ class TrackingController(BaseController):
         query = DBSession.query(TrackingFix) \
                 .options(joinedload(TrackingFix.pilot)) \
                 .filter(TrackingFix.id == subq.c.id) \
-                .filter(subq.c.row_number == 1) \
+                .filter(subq.c.rank == 1) \
                 .order_by(desc(TrackingFix.time))
 
         na_cache = cache.get_cache('tracking.nearest_airport', expire=60 * 60)
