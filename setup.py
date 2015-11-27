@@ -34,7 +34,7 @@ install_requires = [
     "Genshi",
     "zope.sqlalchemy >= 0.4",
     "repoze.tm2 >= 1.0a5",
-    "sqlalchemy < 0.8",
+    "sqlalchemy == 0.7.9",
     "repoze.what >= 1.0.8",
     "repoze.who-friendlyform >= 1.0.4",
     "repoze.what-pylons >= 1.0",
@@ -80,6 +80,7 @@ setup(
     message_extractors={'skylines': [
             ('**.py', 'python', None),
             ('templates/**.html', 'genshi', None),
+            ('templates/**.jinja', 'jinja2', None),
             ('public/**', 'ignore', None)]},
 
     entry_points="""
