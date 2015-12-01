@@ -183,7 +183,7 @@ class FlightController(BaseController):
         return get_flight_path(self.flight, **kw)
 
     @with_trailing_slash
-    @expose('jinja:flights/view.jinja')
+    @expose('flights/view.html')
     def index(self, **kwargs):
         def add_flight_path(flight):
             trace = get_flight_path(flight)
@@ -196,7 +196,7 @@ class FlightController(BaseController):
                     phase_formatter=format_phase)
 
     @without_trailing_slash
-    @expose('jinja:flights/map.jinja')
+    @expose('flights/map.html')
     def map(self, **kwargs):
         def add_flight_path(flight):
             trace = get_flight_path(flight, threshold=0.0001, max_points=10000)

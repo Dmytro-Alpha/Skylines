@@ -56,7 +56,7 @@ class ClubController(BaseController):
         self.club = club
 
     @with_trailing_slash
-    @expose('jinja:clubs/view.jinja')
+    @expose('clubs/view.html')
     def index(self):
         return dict(page='settings', club=self.club)
 
@@ -111,7 +111,7 @@ class ClubController(BaseController):
 
 
 class ClubsController(BaseController):
-    @expose('jinja:clubs/list.jinja')
+    @expose('clubs/list.html')
     def index(self):
         clubs = DBSession.query(Club).order_by(Club.name)
         return dict(page='settings', clubs=clubs)

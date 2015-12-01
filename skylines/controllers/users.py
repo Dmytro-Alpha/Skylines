@@ -244,7 +244,7 @@ class UserController(BaseController):
         self.user = user
         request.environ['UserController.user.id'] = self.user.id
 
-    @expose('jinja:users/view.jinja')
+    @expose('users/view.html')
     def index(self):
         return dict(page='settings', user=self.user,
                     distance_flights=self.get_distance_flights(),
@@ -421,9 +421,6 @@ class UserController(BaseController):
             last_year_statistics['flights'] = query.flights
             last_year_statistics['distance'] = query.distance
             last_year_statistics['duration'] = query.duration
-
-            last_year_statistics['average_distance'] = query.distance / query.flights
-            last_year_statistics['average_duration'] = query.duration / query.flights
 
         return last_year_statistics
 
