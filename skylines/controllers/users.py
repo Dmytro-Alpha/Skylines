@@ -21,6 +21,7 @@ from skylines.model.igcfile import IGCFile
 from skylines.lib.form import BootstrapForm
 from sqlalchemy.sql.expression import and_, or_
 from sqlalchemy import func
+from sqlalchemy.orm import joinedload
 from repoze.what.predicates import not_anonymous, has_permission
 from skylines.model.geo import Location
 from datetime import date, timedelta
@@ -244,7 +245,7 @@ class UserController(BaseController):
         self.user = user
         request.environ['UserController.user.id'] = self.user.id
 
-    @expose('jinja:users/view.jinja')
+    @expose('users/view.html')
     def index(self):
         return dict(page='settings', user=self.user,
                     distance_flights=self.get_distance_flights(),
@@ -422,9 +423,6 @@ class UserController(BaseController):
             last_year_statistics['distance'] = query.distance
             last_year_statistics['duration'] = query.duration
 
-            last_year_statistics['average_distance'] = query.distance / query.flights
-            last_year_statistics['average_duration'] = query.duration / query.flights
-
         return last_year_statistics
 
     def get_takeoff_locations(self):
@@ -451,9 +449,9 @@ class UserController(BaseController):
 
 
 class UsersController(BaseController):
-    @expose('jinja:users/list.jinja')
+    @expose('users/list.html')
     def index(self):
-        users = DBSession.query(User).order_by(User.display_name)
+        users = DBSession.query(User).options(joinedload(User.club)).order_by(User.display_name)
         return dict(page='settings', users=users)
 
     @expose()
