@@ -5,7 +5,6 @@ from collections import OrderedDict
 from sqlalchemy import ForeignKey, Column
 from sqlalchemy.orm import relation
 from sqlalchemy.types import Integer, DateTime
-from sqlalchemy.sql.expression import and_
 
 from skylines.model.base import DeclarativeBase
 from skylines.model.session import DBSession
@@ -63,7 +62,7 @@ class Notification(DeclarativeBase):
         self.time_read = datetime.utcnow()
 
     @classmethod
-    def mark_all_read(cls, user, filter_func=None):
+    def mark_all_read(cls, user, filter_func = None):
         query = DBSession.query(cls) \
                          .filter(cls.recipient == user)
 
@@ -74,16 +73,13 @@ class Notification(DeclarativeBase):
 
     @classmethod
     def constants(cls):
-        return {
-            member: getattr(cls, member)
-            for member in dir(cls) if member.isupper()
-        }
+        return { member: getattr(cls, member) for member in dir(cls) if member.isupper() }
 
 
 def count_unread_notifications(user):
     return DBSession.query(Notification) \
-                    .filter(and_(Notification.recipient == user,
-                                 Notification.time_read is None)).count()
+                    .filter(Notification.recipient == user) \
+                    .filter(Notification.time_read == None).count()
 
 
 def create_flight_comment_notifications(comment):
