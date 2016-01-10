@@ -284,8 +284,7 @@ class FlightController(BaseController):
         else:
             competition_id = None
 
-        return dict(active_page='settings', title=_('Change Aircraft'),
-                    user=request.identity['user'],
+        return dict(active_page='flights', title=_('Change Aircraft'),
                     form=select_aircraft_form,
                     values=dict(model=model_id,
                                 registration=registration,
