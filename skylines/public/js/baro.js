@@ -10,7 +10,6 @@
     var passive = [];
     var enls = [];
     var contests = [];
-    var elevations = [];
     var time_highlight = null;
 
     // Public attributes and functions
@@ -91,23 +90,6 @@
      */
     baro.setContests = function(data) {
       contests = data;
-    };
-
-
-    /**
-     * @expose
-     * Clears the elevation data
-     */
-    baro.clearElevations = function() {
-      elevations = [];
-    };
-
-    /**
-     * @expose
-     * Sets the elevation data
-     */
-    baro.setElevations = function(data) {
-      elevations = data;
     };
 
 
@@ -229,7 +211,6 @@
       addPassiveTraces(data);
       addENLData(data);
       addContests(data);
-      addElevations(data);
       updateTimeHighlight();
 
       flot.setData(data);
@@ -327,17 +308,6 @@
           markdata: markings
         });
       }
-    }
-
-    function addElevations(data) {
-      data.push({
-        data: elevations,
-        color: 'rgb(235, 155, 98)',
-        lines: {
-          lineWidth: 0,
-          fill: 0.8
-        }
-      });
     }
 
     /**
