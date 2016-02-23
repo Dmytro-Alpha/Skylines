@@ -1,15 +1,8 @@
-/* Copyright (c) 2006-2013 by OpenLayers Contributors (see authors.txt for
- * full list of contributors). Published under the 2-clause BSD license.
- * See license.txt in the OpenLayers distribution or repository for the
- * full text of the license. */
-
 var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
   layerStates: null,
   layersDiv: null,
+  ascending: true,
 
-  /**
-   * @param {Object} options
-   */
   initialize: function(options) {
     OpenLayers.Control.prototype.initialize.apply(this, arguments);
     this.layerStates = [];
@@ -29,9 +22,6 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
     OpenLayers.Control.prototype.destroy.apply(this, arguments);
   },
 
-  /**
-   * @param {<OpenLayers.Map>} map
-   */
   setMap: function(map) {
     OpenLayers.Control.prototype.setMap.apply(this, arguments);
 
@@ -44,10 +34,6 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
     });
   },
 
-  /**
-   * @return {DOMElement} A reference to the DIV DOMElement containing the
-   *   switcher tabs.
-   */
   draw: function() {
     OpenLayers.Control.prototype.draw.apply(this);
     this.loadContents();
@@ -55,35 +41,26 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
     return this.div;
   },
 
-  /**
-   * Checks if the layer state has changed since the last redraw() call.
-   *
-   * @return {Boolean} The layer state changed since the last redraw() call.
-   */
   checkRedraw: function() {
+    var redraw = false;
     if (!this.layerStates.length ||
-        (this.map.layers.length != this.layerStates.length))
-      return true;
-
-    for (var i = 0, len = this.layerStates.length; i < len; i++) {
-      var layerState = this.layerStates[i];
-      var layer = this.map.layers[i];
-      if ((layerState.name != layer.name) ||
-          (layerState.inRange != layer.inRange) ||
-          (layerState.id != layer.id))
-        return true;
+        (this.map.layers.length != this.layerStates.length)) {
+      redraw = true;
+    } else {
+      for (var i = 0, len = this.layerStates.length; i < len; i++) {
+        var layerState = this.layerStates[i];
+        var layer = this.map.layers[i];
+        if ((layerState.name != layer.name) ||
+            (layerState.inRange != layer.inRange) ||
+            (layerState.id != layer.id)) {
+          redraw = true;
+          break;
+        }
+      }
     }
-
-    return false;
+    return redraw;
   },
 
-  /**
-   * Goes through and takes the current state of the Map and rebuilds the
-   * control to display that state.
-   *
-   * @return {DOMElement} A reference to the DIV DOMElement containing
-   *   the control.
-   */
   redraw: function() {
     if (!this.checkRedraw()) {
       return this.div;
@@ -105,21 +82,28 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
 
     var layers = this.map.layers.slice();
 
-    var layer_switcher = $('<div class="box"></div>');
-    var base_layers = $('<div class="base"></div>');
-    var overlay_layers = $('<div class="overlay"></div>');
+    var layer_switcher = $('<div class="GraphicLayerSwitcher box"></div>');
+    var base_layers = $('<div id="GraphicLayerSwitcher_base" class="base">' +
+        '</div>');
+    var overlay_layers = $('<div id="GraphicLayerSwitcher_overlay"' +
+        'class="overlay"></div>');
 
-    var current = $('<img src="../../images/layers.png" class="current"/>');
+    var current = $(
+        '<a href="#LayerSwitcher">' +
+        '<img src="../../images/layers.png" />' +
+        '</a>');
+    current.addClass('GraphicLayerSwitcher current');
 
     current.on('click touchend', function(e) {
-      current.hide();
-      layer_switcher.show();
+      $(this).hide();
+      $('.GraphicLayerSwitcher.box').show();
       e.stopPropagation();
     });
 
     $(this.div).append(current);
 
 
+    if (!this.ascending) { layers.reverse(); }
     for (var i = 0; i < layers.length; i++) {
       var layer = layers[i];
       var baseLayer = layer.isBaseLayer;
@@ -127,11 +111,12 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
 
       if (layer.displayInLayerSwitcher) {
         // populate base layer box
-        var layer_visible = baseLayer ?
-            (layer == this.map.baseLayer) : layer.getVisibility();
+        var on;
+        if (baseLayer) on = (layer == this.map.baseLayer);
+        else on = layer.getVisibility();
 
         var layer_image = '../../images/layers/' + layer.name +
-            (layer_visible ? '.png' : '.bw.png');
+            (on ? '.png' : '.bw.png');
 
         var item = $(
             "<a id='" + id + "' href='#LayerSwitcher'>" +
@@ -139,8 +124,9 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
             layer.name +
             '</a><br />');
 
-        if (layer_visible)
+        if (on) {
           item.addClass('active');
+        }
 
         item.on('click touchend', $.proxy(this.onInputClick,
             {'layerSwitcher': this, 'layer': layer}));
@@ -151,7 +137,7 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
               $('#' + this.id).find('img').attr('src',
                   '../../images/layers/' + this.layer.name + '.png');
 
-              $('.GraphicLayerSwitcher .base .active').find('img').attr('src',
+              $('.GraphicLayerSwitcher.base .active').find('img').attr('src',
                   '../../images/layers/' + this.map.baseLayer.name + '.bw.png');
             }
           }, { id: id, layer: layer, map: this.map}));
@@ -161,7 +147,7 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
               $('#' + this.id).find('img').attr('src',
                   '../../images/layers/' + this.layer.name + '.bw.png');
 
-              $('.GraphicLayerSwitcher .base .active').find('img').attr('src',
+              $('.GraphicLayerSwitcher.base .active').find('img').attr('src',
                   '../../images/layers/' + this.map.baseLayer.name + '.png');
             }
           }, { id: id, layer: layer, map: this.map }));
@@ -178,8 +164,8 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
     $(document).on('mouseup touchend', function(e) {
       if (base_layers.find(e.target).length === 0 &&
           overlay_layers.find(e.target).length === 0) {
-        layer_switcher.hide();
-        current.show();
+        $('.GraphicLayerSwitcher.box').hide();
+        $('.GraphicLayerSwitcher.current').show();
       }
     });
 
@@ -188,8 +174,8 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
     $(this.div).on('mousemove touchstart', function() {
       clearTimeout(close_timeout);
       close_timeout = setTimeout(function() {
-        layer_switcher.hide();
-        current.show();
+        $('.GraphicLayerSwitcher.box').hide();
+        $('.GraphicLayerSwitcher.current').show();
       }, 5000);
     });
 
@@ -217,15 +203,16 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
 
       if (layer.displayInLayerSwitcher) {
         // populate base layer box
-        var layer_visible = baseLayer ?
-            (layer == this.map.baseLayer) : layer.getVisibility();
+        var on;
+        if (baseLayer) on = (layer == this.map.baseLayer);
+        else on = layer.getVisibility();
 
         var layer_image = '../../images/layers/' + layer.name +
-            (layer_visible ? '.png' : '.bw.png');
+            (on ? '.png' : '.bw.png');
 
         $('#' + id).find('img').attr('src', layer_image);
 
-        if (layer_visible) {
+        if (on) {
           $('#' + id).addClass('active');
         } else {
           $('#' + id).removeClass('active');
@@ -244,27 +231,16 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
       overlay_layers = [];
       for (var i = 0; i < this.layer.map.layers.length; ++i) {
         var layer = this.layer.map.layers[i];
-        if (!layer.isBaseLayer &&
-            layer.visibility &&
-            layer.displayInLayerSwitcher)
+        if (!layer.isBaseLayer && layer.visibility && layer.displayInLayerSwitcher)
           overlay_layers.push(layer.name);
       }
-
-      $.cookie('overlay_layers', overlay_layers.join(';'), {
-        path: '/',
-        expires: 365
-      });
+      $.cookie('overlay_layers', overlay_layers.join(';'), { path: '/', expires: 365 });
     }
 
     this.layerSwitcher.updateLayerItems();
     OpenLayers.Event.stop(e);
   },
 
-  /**
-   * Cycles through the loaded data and base layer input arrays and makes
-   * the necessary calls to the Map object such that that the map's
-   * visual state corresponds to what the user has selected in the control.
-   */
   updateMap: function() {
     // set the newly selected base layer
     for (var i = 0, len = this.baseLayers.length; i < len; i++) {
@@ -281,9 +257,6 @@ var GraphicLayerSwitcher = OpenLayers.Class(OpenLayers.Control, {
     }
   },
 
-  /**
-   * Set up the labels and divs for the control
-   */
   loadContents: function() {
     OpenLayers.Event.observe(this.div, 'click',
         this.ignoreEvent);
