@@ -59,7 +59,7 @@ class TrackingFix(DeclarativeBase):
         self.location_wkt = from_shape(Point(longitude, latitude), srid=4326)
 
     @property
-    def altitude_agl(self):
+    def altitude_gnd(self):
         if not self.elevation:
             raise ValueError('This TrackingFix has no elevation.')
 
