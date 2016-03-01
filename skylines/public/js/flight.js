@@ -3,7 +3,7 @@
 /**
  * Array of flight objects. (see addFlight method)
  */
-var flights = new slFlightCollection();
+var flights = [];
 
 var baro;
 var fix_table;
@@ -113,13 +113,15 @@ function updateBaroScale() {
   var last_t = 0;
 
   // circle throu all flights
-  flights.each(function(flight) {
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; i++) {
+    var flight = flights[i];
     var geometries = flight.geo.partitionedGeometries;
 
     // if flight is not in viewport continue.
     var length = geometries.length;
     if (length == 0)
-      return;
+      continue;
 
     // show barogram of all trace parts visible
     var comp_length = geometries[length - 1].components.length;
@@ -132,7 +134,7 @@ function updateBaroScale() {
 
     if (flight.t[last] > last_t)
       last_t = flight.t[last];
-  });
+  }
 
   if (last_t == 0)
     baro.clearTimeInterval();
@@ -255,7 +257,7 @@ function addFlight(sfid, _lonlat, _levels, _num_levels, _time, _height, _enl,
     }
   }
 
-  flights.add({
+  flights.push({
     lonlat: lonlat,
     t: time,
     h: height,
@@ -292,8 +294,10 @@ function addFlight(sfid, _lonlat, _levels, _num_levels, _time, _height, _enl,
 function addFlightFromJSON(url) {
   $.ajax(url, {
     success: function(data) {
-      if (flights.has(data.sfid))
-        return;
+      var flightsLength = flights.length;
+      for (var i = 0; i < flightsLength; ++i) {
+        if (flights[i].sfid == data.sfid) return;
+      }
 
       addFlight(data.sfid, data.encoded.points, data.encoded.levels,
                 data.num_levels, data.barogram_t, data.barogram_h,
@@ -343,6 +347,21 @@ function addContest(name, lonlat, times, sfid) {
   feature.renderIntent = (flights.length == 0) ? 'contest' : 'hidden';
 
   map.getLayersByName('Flight')[0].addFeatures(feature);
+}
+
+/**
+ * @return {OpenLayers.Bounds} bounds containing all flights on the map.
+ */
+
+function getAllFlightsBounds() {
+  var bounds = new OpenLayers.Bounds();
+
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; ++i) {
+    bounds.extend(flights[i].geo.bounds);
+  }
+
+  return bounds;
 }
 
 
@@ -406,7 +425,10 @@ function updateBaroData() {
   var contests = [], elevations = [];
 
   var active = [], passive = [], enls = [];
-  flights.each(function(flight) {
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; ++i) {
+    var flight = flights[i];
+
     var data = {
       data: flight.flot_h,
       color: flight.color
@@ -431,11 +453,11 @@ function updateBaroData() {
     }
 
     // Save contests of only flight for later if applicable
-    if (flights.length == 1) {
+    if (flightsLength == 1) {
       contests = flight.contests;
       elevations = flight.flot_elev;
     }
-  });
+  }
 
   baro.setActiveTraces(active);
   baro.setPassiveTraces(passive);
@@ -467,23 +489,26 @@ function setTime(time) {
   // update barogram crosshair
   baro.setTime(time);
 
-  flights.each(function(flight) {
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; ++i) {
+    var flight = flights[i];
+
     // calculate fix data
     fix_data = getFixData(flight, time);
     if (!fix_data) {
       // update map
-      hidePlaneOnMap(flight);
+      hidePlaneOnMap(i);
 
       // update fix-data table
       fix_table.clearFix(flight.sfid);
     } else {
       // update map
-      setPlaneOnMap(flight, fix_data);
+      setPlaneOnMap(i, fix_data);
 
       // update fix-data table
       fix_table.updateFix(flight.sfid, fix_data);
     }
-  });
+  }
 
   fix_table.render();
 }
@@ -556,8 +581,8 @@ function getFixData(flight, time) {
   return fix_data;
 }
 
-function setPlaneOnMap(flight, fix_data) {
-  var plane = flight.plane;
+function setPlaneOnMap(id, fix_data) {
+  var plane = flights[id].plane;
 
   // set plane location
   plane.geometry = fix_data['loc'];
@@ -572,12 +597,12 @@ function setPlaneOnMap(flight, fix_data) {
   // add plane marker if more than one flight on the map
   if (flights.length > 1) {
     if (!plane.marker) {
-      var comp_id = flight.additional &&
-          flight.additional['competition_id'];
+      var comp_id = flights[id].additional &&
+          flights[id].additional['competition_id'];
 
       plane.marker = $(
           '<span class="badge plane_marker" ' +
-              'style="background: ' + flight.color + ';">' +
+              'style="background: ' + flights[id].color + ';">' +
           (comp_id ? comp_id : '') +
           '</span>');
 
@@ -593,27 +618,32 @@ function setPlaneOnMap(flight, fix_data) {
   }
 }
 
-function hidePlaneOnMap(flight) {
-  var layer = map.getLayersByName('Flight')[0];
+function hidePlaneOnMap(id) {
+  map.getLayersByName('Flight')[0].removeFeatures(flights[id].plane);
 
-  var plane = flight.plane;
-
-  layer.removeFeatures(plane);
-
-  if (plane && plane.marker)
-    plane.marker.hide();
+  if (flights[id].plane && flights[id].plane.marker)
+    flights[id].plane.marker.hide();
 }
 
 function hideAllPlanesOnMap() {
   var layer = map.getLayersByName('Flight')[0];
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; ++i) {
+    layer.removeFeatures(flights[i].plane);
+    if (flights[i].plane && flights[i].plane.marker)
+      flights[i].plane.marker.hide();
+  }
+}
 
-  flights.each(function(flight) {
-    var plane = flight.plane;
+function flightWithSFID(sfid) {
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; ++i) {
+    var flight = flights[i];
+    if (flight.sfid == sfid)
+      return flight;
+  }
 
-    layer.removeFeatures(plane);
-    if (plane && plane.marker)
-      plane.marker.hide();
-  });
+  return null;
 }
 
 
@@ -647,7 +677,7 @@ function hoverMap() {
     // and draw a position marker on the linechart.
     if (nearest != null) {
       // calculate time
-      var flight = nearest.flight;
+      var flight = flights[nearest.fid];
       var time_prev = flight.t[nearest.from];
       var time_next = flight.t[nearest.from + 1];
       var time = time_prev + (time_next - time_prev) * nearest.along;
@@ -674,7 +704,9 @@ function searchForPlane(within, loc, hoverTolerance) {
   var possible_solutions = [];
 
   // circle throu all flights visible in viewport
-  flights.each(function(flight) {
+  var flightsLength = flights.length;
+  for (var i = 0; i < flightsLength; ++i) {
+    var flight = flights[i];
     var geometries = flight.geo.partitionedGeometries;
     var geometriesLength = geometries.length;
 
@@ -700,11 +732,11 @@ function searchForPlane(within, loc, hoverTolerance) {
           possible_solutions.push({
             from: components[k - 1].originalIndex,
             to: components[k].originalIndex,
-            flight: flight
+            fid: i
           });
       }
     }
-  });
+  }
 
   // no solutions found. return.
   if (possible_solutions.length == 0)
@@ -722,7 +754,7 @@ function searchForPlane(within, loc, hoverTolerance) {
   var possible_solutionsLength = possible_solutions.length;
   for (var i = 0; i < possible_solutionsLength; ++i) {
     var possible_solution = possible_solutions[i];
-    var flight = possible_solution.flight;
+    var flight = flights[possible_solution.fid];
     var components = flight.geo.components;
 
     for (var j = possible_solution.from + 1; j <= possible_solution.to; ++j) {
@@ -742,7 +774,7 @@ function searchForPlane(within, loc, hoverTolerance) {
           from: j - 1,
           to: j,
           along: distToSegment.along,
-          flight: possible_solution.flight
+          fid: possible_solution.fid
         };
       }
     }
@@ -794,10 +826,10 @@ distanceToSegmentSquared = function(point, segment) {
 
 
 /**
- * @param {DOMElement} placeholder DOM element of the phases table.
+ * @param {String} id ID of the phases table.
 */
-function initPhasesTable(placeholder) {
-  phase_table = new slPhaseTable(placeholder);
+function initPhasesTable(id) {
+  phase_table = new slPhaseTable($(id));
 
   $(phase_table).on('selection_changed', function(event, data) {
     clearPhaseMarkers();
@@ -842,7 +874,7 @@ function addPhaseMarker(lonlat, image_url) {
 
 function highlightFlightPhase(start, end) {
   // the phases table should contain only phases of our first flight only
-  var flight = flights.at(0);
+  var flight = flights[0];
 
   var start_index = getNextSmallerIndex(flight.t, start);
   var end_index = getNextSmallerIndex(flight.t, end);
@@ -873,7 +905,7 @@ function highlightFlightPhase(start, end) {
 function followFlight(sfid) {
   if (!sfid) return;
 
-  var flight = flights.get(sfid);
+  var flight = flightWithSFID(sfid);
   if (flight) {
     coordinates = flight.geo.components[flight.geo.components.length - 1];
     map.panTo(new OpenLayers.LonLat(coordinates.x, coordinates.y));
