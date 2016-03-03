@@ -10,8 +10,6 @@ from skylines.controllers.base import BaseController
 from skylines.model import DBSession, TrackingFix
 from skylinespolyencode import SkyLinesPolyEncoder
 
-UNKNOWN_ELEVATION = -1000
-
 
 def get_flight_path2(pilot, last_update=None):
     query = DBSession.query(TrackingFix) \
@@ -46,7 +44,7 @@ def get_flight_path2(pilot, last_update=None):
         time = start_time + time_delta.days * 86400 + time_delta.seconds
 
         result.append((time, location.latitude, location.longitude,
-                       fix.altitude, fix.engine_noise_level, fix.elevation))
+                       fix.altitude, fix.engine_noise_level))
     return result
 
 
@@ -79,11 +77,9 @@ def get_flight_path(pilot, threshold=0.001, last_update=None):
     barogram_t = encoder.encodeList([fp[i][0] for i in range(len(fp)) if fixes['levels'][i] != -1])
     barogram_h = encoder.encodeList([fp[i][3] for i in range(len(fp)) if fixes['levels'][i] != -1])
     enl = encoder.encodeList([fp[i][4] or 0 for i in range(len(fp)) if fixes['levels'][i] != -1])
-    elevations = encoder.encodeList([fp[i][5] or UNKNOWN_ELEVATION for i in range(len(fp)) if fixes['levels'][i] != -1])
 
     return dict(encoded=encoded, zoom_levels=zoom_levels, num_levels=num_levels,
-                barogram_t=barogram_t, barogram_h=barogram_h, enl=enl,
-                elevations=elevations)
+                barogram_t=barogram_t, barogram_h=barogram_h, enl=enl)
 
 
 class TrackController(BaseController):
@@ -134,5 +130,4 @@ class TrackController(BaseController):
 
         return dict(encoded=trace['encoded'], num_levels=trace['num_levels'],
                     barogram_t=trace['barogram_t'], barogram_h=trace['barogram_h'],
-                    elevations=trace['elevations'],
                     enl=trace['enl'], sfid=self.pilot.id)
