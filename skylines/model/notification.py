@@ -1,4 +1,5 @@
 from datetime import datetime
+from sets import Set
 from collections import OrderedDict
 
 from sqlalchemy import ForeignKey, Column
@@ -84,12 +85,12 @@ def create_flight_comment_notifications(comment):
     Create notifications for the owner and pilots of the flight
     '''
 
-    # Create list of potential recipients (using set to avoid duplicates)
-    recipients = {comment.flight.igc_file.owner,
-                  comment.flight.pilot,
-                  comment.flight.co_pilot}
+    # Create list of potential recipients (using Set to avoid duplicates)
+    recipients = Set([comment.flight.igc_file.owner,
+                      comment.flight.pilot,
+                      comment.flight.co_pilot])
 
-    # Create notifications for the recipients in the set
+    # Create notifications for the recipients in the Set
     for recipient in recipients:
         # There is no need to notify the user that caused the notification
         if recipient is None or recipient == comment.user:
