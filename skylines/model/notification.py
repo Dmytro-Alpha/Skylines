@@ -2,7 +2,7 @@ from datetime import datetime
 from collections import OrderedDict
 
 from sqlalchemy import ForeignKey, Column
-from sqlalchemy.orm import relation, contains_eager
+from sqlalchemy.orm import relationship
 from sqlalchemy.types import Integer, DateTime
 
 from .base import DeclarativeBase
@@ -13,91 +13,66 @@ from .flight_comment import FlightComment
 from .follower import Follower
 
 
-class Event(DeclarativeBase):
-    __tablename__ = 'events'
-
-    id = Column(Integer, autoincrement=True, primary_key=True)
-
-    # Notification type
-
-    type = Column(Integer, nullable=False)
-
-    class Type:
-        FLIGHT_COMMENT = 1
-        FLIGHT = 2
-        FOLLOWER = 3
-
-    # Event time
-
-    time = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-    # The user that caused the event
-
-    actor_id = Column(
-        Integer, ForeignKey('tg_user.id', ondelete='CASCADE'), nullable=False)
-    actor = relation('User', innerjoin=True)
-
-    # A flight if this event is about a flight
-
-    flight_id = Column(
-        Integer, ForeignKey('flights.id', ondelete='CASCADE'))
-    flight = relation('Flight')
-
-    # A flight comment if this event is about a flight comment
-
-    flight_comment_id = Column(
-        Integer, ForeignKey('flight_comments.id', ondelete='CASCADE'))
-    flight_comment = relation('FlightComment')
-
-    ##############################
-
-    def __repr__(self):
-        return '<Event: id={} type={}>' \
-            .format(self.id, self.type).encode('utf-8')
-
-
 class Notification(DeclarativeBase):
     __tablename__ = 'notifications'
 
     id = Column(Integer, autoincrement=True, primary_key=True)
 
-    # The event of this notification
+    # Notification type (NT_* constants)
+    type = Column(Integer, nullable=False)
 
-    event_id = Column(
-        Integer, ForeignKey('events.id', ondelete='CASCADE'), nullable=False)
-    event = relation('Event', innerjoin=True)
+    NT_FLIGHT_COMMENT = 1
+    NT_FLIGHT = 2
+    NT_FOLLOWER = 3
 
-    # The recipient of this notification
-
-    recipient_id = Column(
-        Integer, ForeignKey('tg_user.id', ondelete='CASCADE'), nullable=False)
-    recipient = relation('User', innerjoin=True)
-
-    # The time that this notification was read by the recipient
-
+    # Time stamps
+    time_created = Column(DateTime, nullable=False, default=datetime.utcnow)
     time_read = Column(DateTime)
 
-    ##############################
+    # The user that caused the notification (if any)
+    sender_id = Column(Integer,
+                       ForeignKey('tg_user.id', ondelete='CASCADE'),
+                       nullable=False)
+
+    sender = relationship('User', foreign_keys=[sender_id])
+
+    # The recipient of this notification
+    recipient_id = Column(Integer,
+                          ForeignKey('tg_user.id', ondelete='CASCADE'),
+                          nullable=False)
+
+    recipient = relationship('User', foreign_keys=[recipient_id])
+
+    # A flight if this notification is about a flight
+    flight_id = Column(Integer, ForeignKey('flights.id', ondelete='CASCADE'))
+    flight = relationship('Flight')
+
+    # A flight comment if this notification is about a flight comment
+    flight_comment_id = Column(Integer,
+                               ForeignKey('flight_comments.id', ondelete='CASCADE'))
+    flight_comment = relationship('FlightComment')
 
     def __repr__(self):
-        return '<Notification: id={}>' \
-            .format(self.id).encode('utf-8')
-
-    ##############################
+        return ('<Notification: id=%d type=%d>' % (self.id, self.type)).encode('utf-8')
 
     def mark_read(self):
         self.time_read = datetime.utcnow()
 
     @classmethod
     def mark_all_read(cls, user, filter_func=None):
-        query = cls.query(recipient=user) \
-            .outerjoin(Event) \
-            .filter(Event.id == Notification.event_id)
+        query = cls.query(recipient=user)
 
         if filter_func is not None:
             query = filter_func(query)
 
         query.update(dict(time_read=datetime.utcnow()))
+
+    @classmethod
+    def constants(cls):
+        return {
+            member: getattr(cls, member)
+            for member in dir(cls) if member.isupper()
+        }
 
 
 def count_unread_notifications(user):
@@ -109,15 +84,7 @@ def create_flight_comment_notifications(comment):
     Create notifications for the owner and pilots of the flight
     '''
 
-    # Create the event
-    event = Event(type=Event.NT_FLIGHT_COMMENT,
-                  actor=comment.user,
-                  flight=comment.flight,
-                  flight_comment=comment)
-
-    DBSession.add(event)
-
-    # Create list of potential recipients (using Set to avoid duplicates)
+    # Create list of potential recipients (using set to avoid duplicates)
     recipients = {comment.flight.igc_file.owner,
                   comment.flight.pilot,
                   comment.flight.co_pilot}
@@ -128,7 +95,11 @@ def create_flight_comment_notifications(comment):
         if recipient is None or recipient == comment.user:
             continue
 
-        item = Notification(event=event, recipient=recipient)
+        item = Notification(type=Notification.NT_FLIGHT_COMMENT,
+                            sender=comment.user,
+                            recipient=recipient,
+                            flight=comment.flight,
+                            flight_comment=comment)
         DBSession.add(item)
 
 
@@ -137,30 +108,42 @@ def create_flight_notifications(flight):
     Create notifications for the followers of the owner and pilots of the flight
     '''
 
-    # Create the event
-    event = Event(type=Event.NT_FLIGHT,
-                  actor_id=flight.igc_file.owner.id,
-                  flight=flight)
-
-    DBSession.add(event)
-
     # Create list of flight-related users
-    senders = {flight.pilot_id, flight.co_pilot_id, flight.igc_file.owner.id}
-    senders.discard(None)
+    senders = [flight.pilot_id, flight.co_pilot_id, flight.igc_file.owner_id]
+    senders = OrderedDict([(s, None) for s in senders if s is not None])
 
     # Request followers/recipients of the flight-related users from the DB
-    followers = DBSession.query(Follower.source_id.label('id')) \
-                         .filter(Follower.destination_id.in_(senders))
+    followers = DBSession.query(Follower.source_id, Follower.destination_id) \
+                         .filter(Follower.destination_id.in_(senders.keys())) \
+                         .all()
 
-    # Determine the recipients
-    recipients = set([follower.id for follower in followers])
+    # Determine the recipients and their most important sender
 
-    # Don't send notifications to the senders if they follow each other
-    recipients.difference_update(senders)
+    recipients = dict()
+
+    # For each flight-related user in decreasing importance ..
+    for sender in senders.keys():
+        # For each of his followers
+        for follower in followers:
+            if follower.destination_id != sender:
+                continue
+
+            # Don't send notifications to the senders if they follow each other
+            if follower.source_id in senders:
+                continue
+
+            # If the recipient/follower is not registered
+            # yet by a more important sender
+            if follower.source_id not in recipients:
+                # Register the recipient with the sender's id
+                recipients[follower.source_id] = sender
 
     # Create notifications for the recipients
-    for recipient in recipients:
-        item = Notification(event=event, recipient_id=recipient)
+    for recipient, sender in recipients.iteritems():
+        item = Notification(type=Notification.NT_FLIGHT,
+                            sender_id=sender,
+                            recipient_id=recipient,
+                            flight=flight)
         DBSession.add(item)
 
 
@@ -169,10 +152,7 @@ def create_follower_notification(followed, follower):
     Create notification for the followed pilot about his new follower
     '''
 
-    # Create the event
-    event = Event(type=Event.NT_FOLLOWER, actor=follower)
-    DBSession.add(event)
-
-    # Create the notification
-    item = Notification(event=event, recipient=followed)
+    item = Notification(type=Notification.NT_FOLLOWER,
+                        sender=follower,
+                        recipient=followed)
     DBSession.add(item)
