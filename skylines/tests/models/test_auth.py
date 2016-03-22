@@ -12,7 +12,7 @@ class TestGroup(ModelTest):
     klass = model.Group
     attrs = dict(
         group_name=u"test_group",
-        name=u"Test Group"
+        display_name=u"Test Group"
     )
 
 
@@ -22,7 +22,7 @@ class TestUser(ModelTest):
     klass = model.User
     attrs = dict(
         email_address=u"ignucius@example.org",
-        name=u"Test User"
+        display_name=u"Test User"
     )
 
     def test_obj_creation_email(self):

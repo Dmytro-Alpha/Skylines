@@ -32,7 +32,7 @@ class TestRegistration(TestController):
         form = self.browser.getForm(action='new_post')
 
         form.getControl(name='email_address').value = email
-        form.getControl(name='name').value = name
+        form.getControl(name='display_name').value = name
         form.getControl(name='password').value = password
         form.getControl(name='verify_password').value = verify_password
 
@@ -47,7 +47,7 @@ class TestRegistration(TestController):
         assert user is not None, \
             "The user could not be found: %s" % email
         assert user.email_address == email
-        assert user.name == name
+        assert user.display_name == name
 
     def expect_error(self, response,
                      email='expect_error@skylines.xcsoar.org',
