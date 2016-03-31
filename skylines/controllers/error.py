@@ -4,7 +4,6 @@
 import re
 
 from tg import request, expose
-from tg.i18n import ugettext as _
 from webob.exc import HTTPNotFound
 
 from .base import BaseController
@@ -27,7 +26,7 @@ class ErrorController(BaseController):
 
     """
 
-    @expose('generic/page.jinja')
+    @expose('error.jinja')
     def document(self, *args, **kwargs):
         """Render the error document"""
 
@@ -47,10 +46,7 @@ class ErrorController(BaseController):
             default_message = ("<p>We're sorry but we weren't able to process "
                                " this request.</p>")
 
-        code = request.params.get('code', resp.status_int)
-        title = _('Error {code}').format(code=code)
-
         values = dict(prefix=request.environ.get('SCRIPT_NAME', ''),
-                      title=title,
-                      content=request.params.get('message', default_message))
+                      code=request.params.get('code', resp.status_int),
+                      message=request.params.get('message', default_message))
         return values
