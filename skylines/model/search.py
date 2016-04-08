@@ -1,7 +1,6 @@
 import shlex
 
-from sqlalchemy import literal_column, cast, desc, Unicode
-from sqlalchemy.dialects.postgresql import array
+from sqlalchemy import literal_column, desc
 
 from .session import DBSession
 
@@ -44,18 +43,10 @@ def search_query(cls, tokens,
     else:
         weight = literal_column(str(1))
 
-    # Create an array of stringified detail columns
-    details = getattr(cls, '__search_detail_columns__', None)
-    if details:
-        details = [cast(getattr(cls, d), Unicode) for d in details]
-    else:
-        details = [literal_column('NULL')]
-
     # Create a query object
     query = DBSession.query(
         cls_name.label('model'), cls.id.label('id'),
-        cls.name.label('name'), array(details).label('details'),
-        weight.label('weight'))
+        cls.name.label('name'), weight.label('weight'))
 
     # Filter out specific ids (optional)
     if ids:
@@ -213,22 +204,3 @@ def weight_expression(columns, tokens):
                 expressions.append(expression)
 
     return sum(expressions)
-
-##############################
-
-
-def process_result_details(models, results):
-    models = {m.__name__: m for m in models}
-
-    for result in results:
-        model = models.get(result.model, None)
-        if not model:
-            continue
-
-        details = getattr(model, '__search_detail_columns__', [None])
-        if len(details) != len(result.details):
-            continue
-
-        for key, value in zip(details, result.details):
-            if key:
-                setattr(result, key, value)
