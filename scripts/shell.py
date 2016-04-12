@@ -5,7 +5,6 @@
 
 import sys
 import os
-import transaction
 from IPython.config.loader import Config
 from IPython.frontend.terminal.embed import InteractiveShellEmbed
 from skylines.config import environment
@@ -20,5 +19,4 @@ if not environment.load_from_file(conf_path):
 config = Config()
 shell = InteractiveShellEmbed(config=config)
 shell.push(globals())
-shell.push([transaction])
 shell('SkyLines Shell')

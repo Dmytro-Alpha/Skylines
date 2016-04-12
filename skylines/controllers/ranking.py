@@ -18,7 +18,7 @@ class RankingController(BaseController):
         redirect('/ranking/clubs')
 
     @staticmethod
-    def __get_result(model, flight_field, year=None):
+    def __get_result(model, flight_field, **kw):
         subq = DBSession \
             .query(getattr(Flight, flight_field),
                    func.count('*').label('count'),
@@ -26,7 +26,12 @@ class RankingController(BaseController):
             .group_by(getattr(Flight, flight_field)) \
             .outerjoin(Flight.model)
 
-        if isinstance(year, int):
+        if 'year' in kw:
+            try:
+                year = int(kw['year'])
+            except:
+                raise HTTPBadRequest
+
             year_start = date(year, 1, 1)
             year_end = date(year, 12, 31)
             subq = subq.filter(Flight.date_local >= year_start) \
@@ -42,43 +47,23 @@ class RankingController(BaseController):
         result = result.order_by(desc('total'))
         return result
 
-    @classmethod
-    def __handle_request(cls, model, flight_field, **kw):
-        current_year = date.today().year
-        year = cls.__parse_year(**kw)
-        result = cls.__get_result(model, flight_field, year=year)
-        return dict(year=year, current_year=current_year, result=result)
-
-    @staticmethod
-    def __parse_year(**kw):
-        try:
-            year = kw['year']
-
-            if year == 'all':
-                return 'all'
-
-            return int(year)
-        except:
-            current_year = date.today().year
-            return current_year
-
     @without_trailing_slash
     @expose('ranking/pilots.jinja')
     @paginate('result', items_per_page=20)
     def pilots(self, **kw):
-        return dict(self.__handle_request(User, 'pilot_id', **kw),
-                    active_header_tab='pilots')
+        return dict(tab='pilots',
+                    result=self.__get_result(User, 'pilot_id', **kw))
 
     @without_trailing_slash
     @expose('ranking/clubs.jinja')
     @paginate('result', items_per_page=20)
     def clubs(self, **kw):
-        return dict(self.__handle_request(Club, 'club_id', **kw),
-                    active_header_tab='clubs')
+        return dict(tab='clubs',
+                    result=self.__get_result(Club, 'club_id', **kw))
 
     @without_trailing_slash
     @expose('ranking/airports.jinja')
     @paginate('result', items_per_page=20)
     def airports(self, **kw):
-        return dict(self.__handle_request(Airport, 'takeoff_airport_id', **kw),
-                    active_header_tab='airports')
+        return dict(tab='airports',
+                    result=self.__get_result(Airport, 'takeoff_airport_id', **kw))
