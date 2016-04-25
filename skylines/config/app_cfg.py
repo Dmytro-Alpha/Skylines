@@ -61,7 +61,8 @@ def install_assets_environment(app):
     jinja2_env.assets_environment = Environment(config)
 
     # Load predefined bundles from YAML file
-    jinja2_env.assets_environment.load_bundles('skylines.assets.bundles')
+    jinja2_env.assets_environment.load_bundles(
+        config['webassets.bundles_module'])
 
     return app
 
