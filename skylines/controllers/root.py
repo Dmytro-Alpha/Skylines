@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Main Controller"""
 
-import os
 from datetime import datetime
 
 from tg import expose, flash, lurl, request, redirect, require, config
@@ -15,44 +14,9 @@ from .users import UsersController
 from .clubs import ClubsController
 from .flights import FlightsController
 from .notifications import NotificationsController
-from .ranking import RankingController
-from .search import SearchController
 from .tracking import TrackingController
-from .statistics import StatisticsController
-from .api import APIController
-
-from skylines.lib.helpers import markdown
 
 __all__ = ['RootController']
-
-
-class AboutController(BaseController):
-    @expose('about.jinja')
-    def index(self, **kw):
-        """Handle the 'about' page."""
-        return dict()
-
-    @expose('generic/page.jinja')
-    def team(self, **kw):
-        path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            '..', '..', 'AUTHORS.md')
-        with open(path) as f:
-            content = f.read().decode('utf-8')
-
-        content = content.replace('Developers', _('Developers'))
-        content = content.replace('Translators', _('Translators'))
-
-        content = markdown.convert(content)
-        return dict(title=_('The SkyLines Team'), content=content)
-
-    @expose('generic/page.jinja')
-    def imprint(self, **kw):
-        content = config.get(
-            'skylines.imprint',
-            'Please set the skylines.imprint variable in the environment '
-            'INI file.')
-
-        return dict(title=_('Imprint'), content=content)
 
 
 class RootController(BaseController):
@@ -69,17 +33,12 @@ class RootController(BaseController):
     must be wrapped around with :class:`tg.controllers.WSGIAppController`.
 
     """
-    about = AboutController()
     error = ErrorController()
     users = UsersController()
     clubs = ClubsController()
     flights = FlightsController()
     notifications = NotificationsController()
-    ranking = RankingController()
-    search = SearchController()
     tracking = TrackingController()
-    statistics = StatisticsController()
-    api = APIController()
 
     _mapproxy_config = config.get('skylines.mapproxy')
     if _mapproxy_config is not None:
