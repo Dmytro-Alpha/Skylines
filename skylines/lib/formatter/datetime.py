@@ -2,8 +2,9 @@ from __future__ import absolute_import
 
 from datetime import timedelta
 
-from flask.ext.babel import get_locale
 import babel.dates
+
+from skylines.lib.i18n import get_locale
 
 __all__ = ['isoformat_utc',
            'format_date', 'format_time', 'format_datetime',

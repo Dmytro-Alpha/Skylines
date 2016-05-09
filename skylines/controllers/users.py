@@ -397,10 +397,40 @@ class UserController(BaseController):
 
 
 class UsersController(BaseController):
+    @expose('users/list.jinja')
+    def index(self):
+        users = User.query() \
+            .options(joinedload(User.club)) \
+            .order_by(func.lower(User.name))
+
+        return dict(active_page='settings', users=users)
+
     @expose()
     def _lookup(self, id, *remainder):
         controller = UserController(get_requested_record(User, id))
         return controller, remainder
+
+    @expose('users/new.jinja')
+    def new(self, **kwargs):
+        return dict(active_page='users', form=new_user_form)
+
+    @expose()
+    @validate(form=new_user_form, error_handler=new)
+    def new_post(self, name, club, email_address, password, **kw):
+        if not club:
+            club = None
+
+        user = User(name=name, club_id=club,
+                    email_address=email_address, password=password)
+        user.created_ip = request.remote_addr
+        user.generate_tracking_key()
+        DBSession.add(user)
+
+        pilots = Group.query(group_name='pilots').first()
+        if pilots:
+            pilots.users.append(user)
+
+        redirect('/')
 
     @expose('generic/form.jinja')
     def recover(self, key=None, **kwargs):
@@ -441,10 +471,23 @@ class UsersController(BaseController):
 
         user = User.by_recover_key(key)
         if user is None:
-                raise HTTPNotFound
+            raise HTTPNotFound
 
         user.password = password
         user.recover_key = None
 
         flash(_('Password changed.'))
         return redirect('/')
+
+    @expose()
+    @require(has_permission('manage'))
+    def generate_keys(self):
+        """Hidden method that generates missing tracking keys."""
+
+        for user in User.query():
+            if user.tracking_key is None:
+                user.generate_tracking_key()
+
+        DBSession.flush()
+
+        return redirect('/users/')
