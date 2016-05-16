@@ -1,4 +1,4 @@
-{% extends "base-page.jinja" %}
+{% extends "base-page-FLASK.jinja" %}
 {% set active_page = "flights" %}
 
 
@@ -62,7 +62,7 @@
                  {{ h.json.dumps(h.get_setting_name('altitude_unit')) }});
 
     initOpenLayers("map_canvas",
-                   "{{ config.get('skylines.map.tile_url', '') }}");
+                   "{{ config.get('SKYLINES_MAP_TILE_URL', '') }}");
     initFlightLayer();
     initBaro($("#barogram"));
 

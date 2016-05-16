@@ -18,7 +18,7 @@ class Airspace(DeclarativeBase):
     time_created = Column(DateTime, nullable=False, default=datetime.utcnow)
     time_modified = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    the_geom = Column(Geometry('POLYGON'))
+    the_geom = Column(Geometry('POLYGON', management=True))
 
     name = Column(String(), nullable=False)
     airspace_class = Column(String(3), nullable=False)

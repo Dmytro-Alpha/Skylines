@@ -23,7 +23,7 @@ class Airport(DeclarativeBase):
     time_created = Column(DateTime, nullable=False, default=datetime.utcnow)
     time_modified = Column(DateTime, nullable=False, default=datetime.utcnow)
 
-    location_wkt = Column(Geometry('POINT'))
+    location_wkt = Column(Geometry('POINT', management=True))
     altitude = Column(Float)
 
     name = Column(String(), nullable=False)

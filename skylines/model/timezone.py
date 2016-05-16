@@ -13,7 +13,7 @@ class TimeZone(DeclarativeBase):
 
     id = Column('gid', Integer, autoincrement=True, primary_key=True)
     tzid = Column(String(30))
-    the_geom = Column(Geometry('MULTIPOLYGON'))
+    the_geom = Column(Geometry('MULTIPOLYGON', management=True))
 
     def __unicode__(self):
         return self.tzid
