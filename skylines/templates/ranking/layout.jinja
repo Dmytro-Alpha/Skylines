@@ -1,15 +1,15 @@
 {% from 'macros/pager.jinja' import pager, pager_script with context %}
 
 
-{% set partial = 'partial' in request.args %}
+{% set partial = 'partial' in request.params %}
 
 {% if not partial %}
-{% extends "base-page-FLASK.jinja" %}
+{% extends "base-page.jinja" %}
 
 {% set header_tabs = [
-    (h.url('/ranking/clubs', params=dict(year=year)), 'clubs', _('Clubs')),
-    (h.url('/ranking/pilots', params=dict(year=year)), 'pilots', _('Pilots')),
-    (h.url('/ranking/airports', params=dict(year=year)), 'airports', _('Airports')),
+    (tg.url('/ranking/clubs', params=dict(year=year)), 'clubs', _('Clubs')),
+    (tg.url('/ranking/pilots', params=dict(year=year)), 'pilots', _('Pilots')),
+    (tg.url('/ranking/airports', params=dict(year=year)), 'airports', _('Airports')),
 ] %}
 
 {% set active_page = "ranking" %}
@@ -24,7 +24,7 @@
       <li class="dropdown">
         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
           {% if year is number -%}
-          {{ _('Season %(year)s', year=year) }}
+          {{ _('Season %(year)s')|format(year=year) }}
           {%- else -%}
           {{ _('All time') }}
           {%- endif %}
