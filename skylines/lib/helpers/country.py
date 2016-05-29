@@ -1,7 +1,7 @@
 from babel import Locale
-from flask.ext.babel import get_locale
+from tg import tmpl_context
 
-__all__ = ['country_name', 'country_name', 'language_to_country_code']
+__all__ = ['country_name', 'language_to_country_code']
 
 __conversion_dict = {
     'en': 'gb',
@@ -14,7 +14,8 @@ __conversion_dict = {
 
 
 def country_name(code):
-    return get_locale().territories[code.upper()]
+    locale = Locale(tmpl_context.current_language['language_code'])
+    return locale.territories[code.upper()]
 
 
 def language_to_country_code(language):

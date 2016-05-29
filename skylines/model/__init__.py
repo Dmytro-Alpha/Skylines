@@ -2,7 +2,7 @@
 """The application's model objects"""
 
 from .base import metadata
-from .session import DBSession
+from .session import DBSession, init_model
 
 # Import your model modules here.
 from .aircraft_model import AircraftModel

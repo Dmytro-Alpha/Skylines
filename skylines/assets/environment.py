@@ -1,5 +1,6 @@
-from flask.ext.assets import Environment as BaseEnvironment
+from webassets import Environment as BaseEnvironment
 from webassets.loaders import PythonLoader
+from paste.deploy.converters import asbool
 
 
 class Environment(BaseEnvironment):
@@ -13,14 +14,23 @@ class Environment(BaseEnvironment):
     See the webassets package for more information.
     """
 
-    def __init__(self, app):
+    def __init__(self, config):
+        # Activate debug mode to disabled concatenation and minification
+        assets_debug = asbool(config.get('webassets.debug', False))
+
+        # Activate auto build mode to build new files once the sources change
+        auto_build = asbool(config.get('webassets.auto_build', False))
+
         # Initialize webassets Environment
-        super(Environment, self).__init__(app)
+        super(Environment, self).__init__(config['webassets.base_dir'],
+                                          config['webassets.base_url'],
+                                          debug=assets_debug,
+                                          auto_build=auto_build)
 
         # Add folders that will be searched for source files
-        load_path = app.config.get('ASSETS_LOAD_DIR', None)
+        load_path = config.get('webassets.load_dir', None)
         if load_path is not None:
-            load_url = app.config.get('ASSETS_LOAD_URL', None)
+            load_url = config.get('webassets.load_url', None)
             self.append_path(load_path, load_url)
 
     def load_bundles(self, module):
