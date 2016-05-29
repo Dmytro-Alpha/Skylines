@@ -34,7 +34,7 @@
         <th>{% trans %}Created{% endtrans %}</th>
         <td>
           {% if club.owner -%}
-            {{ _('%(time_ago)s by %(creator)s')|format(time_ago=insert_timeago(club.time_created)|safe, creator=user_link(club.owner)) }}
+            {{ _('%(time_ago)s by %(creator)s', time_ago=insert_timeago(club.time_created)|safe, creator=user_link(club.owner)) }}
           {%- else %}
             {{ insert_timeago(club.time_created) }}
           {%- endif %}
