@@ -2,23 +2,28 @@ from unittest import TestCase
 from nose.tools import eq_, ok_
 from mock import Mock, patch
 
-from skylines.tests import setup_app, teardown_db
+import transaction
 from skylines.model import DBSession, TrackingFix
+from skylines.tests import setup_app, teardown_db
 
 import struct
 from skylines.tracking import server
 from skylines.tracking.crc import set_crc, check_crc
+from skylines.lib.datetime import from_seconds_of_day
 from datetime import datetime
 from sqlalchemy.exc import SQLAlchemyError
 
 
 def setup():
     # Setup the database
+    DBSession.remove()
+    transaction.begin()
     setup_app()
 
 
 def teardown():
     # Remove the database again
+    DBSession.rollback()
     teardown_db()
 
 
@@ -30,10 +35,9 @@ class TrackingServerTest(TestCase):
         server.TrackingServer.__init__ = Mock(return_value=None)
         self.server = server.TrackingServer()
 
-    def tearDown(self):
         # Clear the database
         TrackingFix.query().delete()
-        DBSession.commit()
+        transaction.commit()
 
     def test_ping(self):
         """ Tracking server sends ACK when PING is received """
@@ -157,6 +161,8 @@ class TrackingServerTest(TestCase):
         else:
             flags |= server.FLAG_ENL
 
+        print flags
+
         message = struct.pack(
             '!IHHQIIiiIHHHhhH', server.MAGIC, 0, server.TYPE_FIX, tracking_key,
             flags, int(time), int(latitude), int(longitude), 0, int(track),
@@ -256,8 +262,7 @@ class TrackingServerTest(TestCase):
         """ Tracking server handles SQLAlchemyError gracefully """
 
         # Mock the transaction commit to fail
-        original = DBSession.commit
-        DBSession.commit = Mock(side_effect=SQLAlchemyError())
+        transaction.commit = Mock(side_effect=SQLAlchemyError())
 
         # Create fake fix message
         message = self.create_fix_message(123456, 0)
@@ -267,9 +272,10 @@ class TrackingServerTest(TestCase):
 
         # Check if the message was properly received
         eq_(TrackingFix.query().count(), 0)
-        ok_(DBSession.commit.called)
+        ok_(transaction.commit.called)
 
-        DBSession.commit = original
+        transaction.commit.side_effect = None
+
 
 if __name__ == "__main__":
     import sys

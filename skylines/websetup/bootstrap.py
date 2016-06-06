@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 """Setup the SkyLines application"""
 
+import transaction
+
 from skylines import model
 
 
-def bootstrap():
+def bootstrap(command, conf, vars):
     """Place any commands to setup skylines here"""
 
     # <websetup.bootstrap.before.auth>
@@ -55,12 +57,13 @@ def bootstrap():
 
         model.DBSession.add(p)
 
-        model.DBSession.commit()
+        model.DBSession.flush()
+        transaction.commit()
     except IntegrityError:
         print 'Warning, there was a problem adding your auth data, it may have already been added:'
         import traceback
         print traceback.format_exc()
-        model.DBSession.rollback()
+        transaction.abort()
         print 'Continuing with bootstrapping...'
 
     # <websetup.bootstrap.after.auth>
