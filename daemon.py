@@ -7,7 +7,7 @@
 import sys
 import os
 import argparse
-from config import to_envvar
+from skylines.config import environment
 
 sys.path.append(os.path.dirname(sys.argv[0]))
 
@@ -17,7 +17,7 @@ parser.add_argument('conf_path', nargs='?', metavar='config.ini',
 
 args = parser.parse_args()
 
-if not to_envvar(args.conf_path):
+if not environment.load_from_file(args.conf_path):
     parser.error('Config file "{}" not found.'.format(args.conf_path))
 
 if __name__ == '__main__':

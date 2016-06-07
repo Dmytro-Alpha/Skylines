@@ -6,7 +6,11 @@
 import sys
 import os
 import argparse
-from skylines.config import to_envvar
+import transaction
+from sqlalchemy.orm import joinedload
+from skylines.config import environment
+from skylines.model import DBSession, Flight
+from skylines.lib.xcsoar import analyse_flight
 
 sys.path.append(os.path.dirname(sys.argv[0]))
 
@@ -20,16 +24,8 @@ parser.add_argument('ids', metavar='ID', nargs='*', type=int,
 
 args = parser.parse_args()
 
-if not to_envvar(args.config):
+if not environment.load_from_file(args.config):
     parser.error('Config file "{}" not found.'.format(args.config))
-
-
-from sqlalchemy.orm import joinedload
-from skylines import app
-from skylines.model import DBSession, Flight
-from skylines.lib.xcsoar import analyse_flight
-
-app.test_request_context().push()
 
 
 def do(flight):
@@ -44,11 +40,10 @@ def apply_and_commit(func, q):
             n_success += 1
         else:
             n_failed += 1
-
     if n_success > 0:
         print "commit"
-        DBSession.commit()
-
+        DBSession.flush()
+        transaction.commit()
     return n_success, n_failed
 
 
