@@ -105,7 +105,7 @@ openlayers_js = Bundle(
     'js/OpenLayers/GraphicLayerSwitcher.js',
     'js/map.js',
     'js/map-click-handler.js',
-    filters=SimpleClosureJS,
+    filters='rjsmin',
     output='js/ol-%(version)s.js')
 
 flight_js = Bundle(
