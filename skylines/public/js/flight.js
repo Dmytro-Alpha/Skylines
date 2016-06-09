@@ -894,10 +894,10 @@ function highlightFlightPhase(start, end) {
   map.zoomToExtent(bounds.scale(2));
 
   addPhaseMarker(flight.lonlat[start_index],
-      '/vendor/openlayers/images/marker-green.png');
+      '/images/OpenLayers/marker-green.png');
 
   addPhaseMarker(flight.lonlat[end_index],
-      '/vendor/openlayers/images/marker.png');
+      '/images/OpenLayers/marker.png');
 }
 
 
