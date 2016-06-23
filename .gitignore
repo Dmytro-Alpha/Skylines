@@ -20,6 +20,7 @@ build
 dist
 
 htdocs
+data
 
 webassets
 
