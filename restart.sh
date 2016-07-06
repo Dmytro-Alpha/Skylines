@@ -12,4 +12,3 @@ python scripts/generate_assets.py
 sv restart skylines-fastcgi
 sv restart mapserver-fastcgi
 sv restart skylines-daemon
-sv restart celery-daemon

@@ -28,8 +28,6 @@ from skylines.model import (
     User, Flight, FlightPhase, Location, Elevation, FlightComment
 )
 from skylines.model.notification import create_flight_comment_notifications
-from skylines.worker import tasks
-from redis.exceptions import ConnectionError
 from skylinespolyencode import SkyLinesPolyEncoder
 
 flight_blueprint = Blueprint('flight', 'skylines')
@@ -37,14 +35,8 @@ flight_blueprint = Blueprint('flight', 'skylines')
 
 def _reanalyse_if_needed(flight):
     if flight.needs_analysis:
-        current_app.logger.info("Queueing flight %s for reanalysis" % flight.id)
-        try:
-            tasks.analyse_flight.delay(flight.id)
-        except ConnectionError:
-            current_app.logger.info('Cannot connect to Redis server')
-            # analyse syncronously...
-            analyse_flight(flight)
-            db.session.commit()
+        current_app.logger.info("Reanalysing flight %s" % flight.id)
+        return analyse_flight(flight)
 
 
 @flight_blueprint.url_value_preprocessor
@@ -57,7 +49,8 @@ def _pull_flight_id(endpoint, values):
     g.flight = g.flights[0]
     g.other_flights = g.flights[1:]
 
-    map(_reanalyse_if_needed, g.flights)
+    if any(map(_reanalyse_if_needed, g.flights)):
+        db.session.commit()
 
 
 @flight_blueprint.url_defaults

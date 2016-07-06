@@ -4,11 +4,9 @@ import logging
 import datetime
 import simplejson
 from subprocess import Popen, PIPE
-import resource
 
 from sqlalchemy.sql.expression import and_
 
-from flask import current_app
 from .path import helper_path
 from skylines import db
 from skylines.lib import files
@@ -244,15 +242,6 @@ def save_phases(root, flight):
     db.session.add(ph)
 
 
-def setlimits():
-    cpu_limit = current_app.config.get('SKYLINES_SUBPROCESS_CPU', 120)
-    mem_limit = current_app.config.get('SKYLINES_SUBPROCESS_MEMORY', 256) \
-        * 1024 * 1024
-
-    resource.setrlimit(resource.RLIMIT_CPU, (cpu_limit, cpu_limit * 1.2))
-    resource.setrlimit(resource.RLIMIT_AS, (mem_limit, mem_limit * 1.2))
-
-
 def run_analyse_flight(path, full=None, triangle=None, sprint=None):
     args = [helper_path('AnalyseFlight')]
 
@@ -267,10 +256,10 @@ def run_analyse_flight(path, full=None, triangle=None, sprint=None):
 
     args.append(path)
 
-    return Popen(args, stdout=PIPE, preexec_fn=setlimits).stdout
+    return Popen(args, stdout=PIPE).stdout
 
 
-def analyse_flight(flight, full=512, triangle=1024, sprint=64):
+def analyse_flight(flight, full=512, triangle=2048, sprint=64):
     path = files.filename_to_path(flight.igc_file.filename)
     log.info('Analyzing ' + path)
 
