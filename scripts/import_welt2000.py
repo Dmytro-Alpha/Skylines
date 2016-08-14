@@ -22,11 +22,10 @@ if not to_envvar(args.config):
     parser.error('Config file "{}" not found.'.format(args.config))
 
 
-from skylines import db, app
+from skylines import db
 from skylines.model import Airport
 from skylines.lib.waypoints.welt2000 import get_database
 
-app.test_request_context().push()
 
 welt2000 = get_database(path=args.welt2000_path)
 
