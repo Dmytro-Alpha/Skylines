@@ -1,4 +1,3 @@
-from flask import g
 from flask.ext.babel import lazy_gettext as l_
 
 from formencode.validators import URL
@@ -9,7 +8,6 @@ from tw.forms import TextField
 from .bootstrap import BootstrapForm
 from skylines import db
 from skylines.model import User, Club
-from skylines.lib.validators import UniqueValueUnless
 
 
 class SelectField(PropertySingleSelectField):
@@ -53,10 +51,6 @@ class NewForm(AddRecordForm):
 new_form = NewForm(db.session)
 
 
-def filter_club_id(model):
-    return model.id == g.club_id
-
-
 class EditForm(EditableForm):
     __base_widget_type__ = BootstrapForm
     __model__ = Club
@@ -67,7 +61,7 @@ class EditForm(EditableForm):
         'website': dict(label_text=l_('Website')),
     }
 
-    name = Field(TextField, UniqueValueUnless(filter_club_id, db.session, __model__, 'name'))
+    name = TextField
     website = Field(TextField, URL())
 
 edit_form = EditForm(db.session)
