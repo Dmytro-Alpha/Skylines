@@ -125,12 +125,10 @@
   $(function() {
     var url = getShareUrl('{{ request.url }}');
     var content =
-        '<div style="text-align:center">' +
-        '<input value="' + url + '" type="text" class="form-control" style="margin-bottom:9px">' +
-        '<a href="http://www.facebook.com/share.php?u=' + url + '" target="_blank" class="btn btn-default btn-xs"><i class="icon-facebook"> Share</i></a> ' +
-        '<a href="https://plus.google.com/share?url=' + url + '" target="_blank" class="btn btn-default btn-xs"><i class="icon-google-plus"> Share</i></a> ' +
-        '<a href="http://twitter.com/share?url=' + url + '" target="_blank" class="btn btn-default btn-xs"><i class="icon-twitter"> Tweet</i></a> ' +
-        '</div>';
+        '<input value="' + url + '" type="text" style="width: 95%;margin-bottom:9px"><br>' +
+        '<a href="http://www.facebook.com/share.php?u=' + url + '" target="_blank" class="btn"><i class="icon-facebook"> Share</i></a> ' +
+        '<a href="https://plus.google.com/share?url=' + url + '" target="_blank" class="btn"><i class="icon-google-plus"> Share</i></a> ' +
+        '<a href="http://twitter.com/share?url=' + url + '" target="_blank" class="btn"><i class="icon-twitter"> Tweet</i></a> ';
 
     $(".btn-share").popover({
       trigger: 'click',
@@ -151,10 +149,10 @@
 
 
 {% block title_right -%}
-<a href="#" class="btn btn-default btn-share">
+<a href="#" class="btn btn-share">
   <i class="icon-share-alt icon-small"></i> Share
 </a>
-<a href="{{ url_for('files.index', filename=flight.igc_file.filename) }}" title="{{ flight.igc_file.filename }}" class="btn btn-default">
+<a href="{{ url_for('files.index', filename=flight.igc_file.filename) }}" title="{{ flight.igc_file.filename }}" class="btn">
   <i class="icon-download-alt"></i> IGC
 </a>
 {%- endblock %}
@@ -162,7 +160,7 @@
 
 {%- block content %}
 <div class="row">
-  <div class="col-md-4">
+  <div class="span4">
     <div class="tabbable">
       <ul class="nav nav-tabs">
         <li class="active"><a href="#tab-overview" data-toggle="tab">{{ _('Overview') }}</a></li>
@@ -180,7 +178,7 @@
 
           <p>
             {%- if trace %}
-            <a href="{{ url_for('.map_') }}" class="btn btn-default"><i class="icon-fullscreen icon-large"></i> {% trans %}Full-screen map{% endtrans %}</a>
+            <a href="{{ url_for('.map_') }}" class="btn"><i class="icon-fullscreen icon-large"></i> {% trans %}Full-screen map{% endtrans %}</a>
             {%- endif %}
 
             <span id="pinned" rel="tooltip" title="{{ _('Activate this to show the flight on top of other flights on the map') }}"></span>
@@ -212,7 +210,7 @@
             <tr>
               <td>
                 <form action="add_comment" method="POST">
-                  <textarea name="text" class="form-control"></textarea><br/>
+                  <textarea style="width: 100%" name="text"></textarea><br/>
                   <input type="submit" value="{{ _('Add comment') }}" class="btn btn-primary"/>
                 </form>
               </td>
@@ -229,7 +227,7 @@
           {{ render_cruise_performance(flight) }}
 
           {%- if flight.has_phases %}
-          <p><a class='btn btn-default' data-toggle="collapse" data-target="#detailed-stats">
+          <p><a class='btn' data-toggle="collapse" data-target="#detailed-stats">
             <i class='icon-info-sign icon-large'></i> {% trans %}Detailed statistics{% endtrans %}
           </a></p>
           {%- endif %}
@@ -238,7 +236,7 @@
     </div>
   </div>
 
-  <div class="col-md-8">
+  <div class="span8">
     {%- if trace %}
     <div id="map_canvas" style="width:100%; height:400pt;"></div>
     <div id="barogram" style="width:100%; height:120pt;"></div>
@@ -252,11 +250,9 @@
 <div id="detailed-stats" class="collapse out">
   <hr />
   <div class="row">
-    <div class="col-md-12">
+    <div class="span12">
       <h3>{% trans %}Phases{% endtrans %}</h3>
-      <div class="table-responsive">
-        {{ render_phases(flight) }}
-      </div>
+      {{ render_phases(flight) }}
     </div>
   </div>
 </div>
