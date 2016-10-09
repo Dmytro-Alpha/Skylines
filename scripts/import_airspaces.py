@@ -340,7 +340,6 @@ def add_airspace(country_code, airspace_class, name, base, top, geom_str):
 
 
 msl_re = re.compile(r'^(\d+)\s*(f|ft|m)?\s*([a]?msl|asl|alt)')
-msld_re = re.compile(r'^(\d+)\s*(f|ft|m)?$')
 flightlevel_re = re.compile(r'^fl\s?(\d+)$')
 agl_re = re.compile(r'^(\d+)\s*(f|ft|m)?\s*(agl|gnd|asfc|sfc)')
 unl_re = re.compile(r'^unl')
@@ -366,13 +365,6 @@ def normalise_height(height, name):
 
     # is it MSL?
     match = msl_re.match(height)
-    if match and match.group(2) == 'm':
-        return '{0} MSL'.format(int(match.group(1)) * 3.2808399)
-    elif match:
-        return '{0} MSL'.format(int(match.group(1)))
-
-    # is it MSL without the msl moniker?
-    match = msld_re.match(height)
     if match and match.group(2) == 'm':
         return '{0} MSL'.format(int(match.group(1)) * 3.2808399)
     elif match:
