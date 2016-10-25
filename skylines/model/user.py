@@ -81,6 +81,7 @@ class User(db.Model):
     # Other settings
 
     admin = db.Column(Boolean, nullable=False, default=False)
+    eye_candy = db.Column(Boolean, nullable=False, default=False)
 
     ##############################
 

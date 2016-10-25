@@ -67,6 +67,8 @@ def profile():
     else:
         g.user.unit_preset = unit_preset
 
+    g.user.eye_candy = request.form.get('eye_candy', False, type=bool)
+
     db.session.commit()
 
     flash(_('Profile was saved.'), 'success')
