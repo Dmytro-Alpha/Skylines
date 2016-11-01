@@ -25,7 +25,7 @@ class ClubPilotsSelectField(GroupSelectField):
 
     def process(self, *args, **kwargs):
         self.choices = [
-            (0, '[' + l_('Unknown or other person') + ']'),
+            (0, '[unspecified]'),
             (g.current_user.id, g.current_user.name),
         ]
 
