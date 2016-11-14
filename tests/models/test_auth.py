@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
+"""Test suite for the TG app's models"""
+from nose.tools import eq_
 
 from skylines import model
-from . import ModelTest
+from tests.models import ModelTest
 
 
 class TestUser(ModelTest):
@@ -16,13 +18,13 @@ class TestUser(ModelTest):
 
     def test_obj_creation_email(self):
         """The obj constructor must set the email right"""
-        assert self.obj.email_address == u"ignucius@example.org"
+        eq_(self.obj.email_address, u"ignucius@example.org")
 
     def test_no_permissions_by_default(self):
         """User objects should have no permission by default."""
-        assert self.obj.admin == False
+        eq_(self.obj.admin, False)
 
     def test_getting_by_email(self):
         """Users should be fetcheable by their email addresses"""
         him = model.User.by_email_address(u"ignucius@example.org")
-        assert him == self.obj
+        eq_(him, self.obj)

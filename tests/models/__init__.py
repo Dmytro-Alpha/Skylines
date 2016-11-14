@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """Unit test suite for the models of the application."""
+from nose.tools import assert_equals
 from tests import setup_db, teardown_db
 
 import config
@@ -31,7 +32,7 @@ class ModelTest(object):
         with cls.app.app_context():
             teardown_db()
 
-    def setup(self):
+    def setUp(self):
         """Prepare model test fixture."""
         self.context = self.app.app_context()
         self.context.push()
@@ -48,7 +49,7 @@ class ModelTest(object):
             db.session.rollback()
             raise
 
-    def teardown(self):
+    def tearDown(self):
         """Finish model test fixture."""
         db.session.rollback()
         self.context.pop()
@@ -70,4 +71,4 @@ class ModelTest(object):
         """Model objects can be queried"""
         obj = db.session.query(self.klass).one()
         for key, value in self.attrs.iteritems():
-            assert getattr(obj, key) == value
+            assert_equals(getattr(obj, key), value)

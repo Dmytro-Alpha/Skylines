@@ -1,74 +1,54 @@
 # -*- coding: utf-8 -*-
 
 import sys
-import pytest
-from unittest import TestCase
+import nose
+from nose.tools import eq_, assert_dict_equal, assert_dict_contains_subset
 
 import datetime
 from skylines.lib.igc import read_igc_headers
 
 
 def test_empty_file():
-    assert read_igc_headers([]) == {}
+    eq_(read_igc_headers([]), {})
 
 
 def test_logger_information():
-    assert (read_igc_headers(['AFLA6NG']) ==
-            dict(manufacturer_id='FLA', logger_id='6NG'))
+    assert_dict_equal(read_igc_headers(['AFLA6NG']),
+                      dict(manufacturer_id='FLA', logger_id='6NG'))
 
 
 def test_filser_logger_id():
-    assert (read_igc_headers(['AFIL01460FLIGHT:1']) ==
-            dict(manufacturer_id='FIL', logger_id='14K'))
+    assert_dict_equal(read_igc_headers(['AFIL01460FLIGHT:1']),
+                      dict(manufacturer_id='FIL', logger_id='14K'))
 
 
 def test_date():
-    headers = read_igc_headers(['AFLA6NG', 'HFDTE150812'])
-
-    assert 'date_utc' in headers
-    assert headers['date_utc'] == datetime.date(2012, 8, 15)
+    assert_dict_contains_subset(
+        dict(date_utc=datetime.date(2012, 8, 15)),
+        read_igc_headers(['AFLA6NG', 'HFDTE150812']))
 
 
 def test_date_only():
-    assert (read_igc_headers(['HFDTE150812']) ==
-            dict(date_utc=datetime.date(2012, 8, 15)))
+    assert_dict_equal(read_igc_headers(['HFDTE150812']),
+                      dict(date_utc=datetime.date(2012, 8, 15)))
 
 
 def test_glider_information():
-    headers = read_igc_headers([
-        'AFLA6NG',
-        'HFDTE',
-        'HFGTYGLIDERTYPE:',
-        'HFGIDGLIDERID:',
-        'HFCIDCOMPETITIONID:'
-    ])
+    assert_dict_contains_subset(
+        dict(model='', reg='', cid=''),
+        read_igc_headers(['AFLA6NG', 'HFDTE',
+                          'HFGTYGLIDERTYPE:',
+                          'HFGIDGLIDERID:',
+                          'HFCIDCOMPETITIONID:']))
 
-    assert 'model' in headers
-    assert headers['model'] == ''
-
-    assert 'reg' in headers
-    assert headers['reg'] == ''
-
-    assert 'cid' in headers
-    assert headers['cid'] == ''
-
-    headers = read_igc_headers([
-        'AFLA6NG',
-        'HFDTE150812',
-        'HFGTYGLIDERTYPE:HORNET',
-        'HFGIDGLIDERID:D_4449',
-        'HFCIDCOMPETITIONID:TH'
-    ])
-
-    assert 'model' in headers
-    assert headers['model'] == 'HORNET'
-
-    assert 'reg' in headers
-    assert headers['reg'] == 'D_4449'
-
-    assert 'cid' in headers
-    assert headers['cid'] == 'TH'
+    assert_dict_contains_subset(
+        dict(model='HORNET', reg='D_4449', cid='TH'),
+        read_igc_headers(['AFLA6NG', 'HFDTE150812',
+                          'HFGTYGLIDERTYPE:HORNET',
+                          'HFGIDGLIDERID:D_4449',
+                          'HFCIDCOMPETITIONID:TH']))
 
 
 if __name__ == "__main__":
-    pytest.main(__file__)
+    sys.argv.append(__name__)
+    nose.run()

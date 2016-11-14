@@ -29,7 +29,7 @@ class TestController(object):
         with cls.app.app_context():
             teardown_db()
 
-    def setup(self):
+    def setUp(self):
         """Method called by nose before running each test"""
         self.context = self.app.app_context()
         self.context.push()
@@ -38,5 +38,5 @@ class TestController(object):
 
         self.browser = Browser('http://localhost/', wsgi_app=self.app.wsgi_app)
 
-    def teardown(self):
+    def tearDown(self):
         self.context.pop()

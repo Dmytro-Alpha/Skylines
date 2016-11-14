@@ -1,9 +1,9 @@
 import os
 import sys
-import pytest
+import nose
 from subprocess import CalledProcessError, check_output as run
 from functools import partial
-from glob import glob
+from glob import iglob
 
 GJSLINT_COMMAND = 'gjslint'
 
@@ -22,12 +22,14 @@ GJSLINT_ERRORS = [
 JS_FOLDER = os.path.join('skylines', 'frontend', 'static', 'js')
 
 
-def pytest_generate_tests(metafunc):
-    paths = glob(os.path.join(JS_FOLDER, '*.js'))
-    metafunc.parametrize('path', paths)
+def test_js_files():
+    for path in iglob(os.path.join(JS_FOLDER, '*.js')):
+        f = partial(run_gjslint, path)
+        f.description = 'gjslint {}'.format(path)
+        yield f
 
 
-def test_gjslint(path):
+def run_gjslint(path):
     args = [GJSLINT_COMMAND]
     args.extend(GJSLINT_OPTIONS)
     for error in GJSLINT_ERRORS:
@@ -46,4 +48,5 @@ def test_gjslint(path):
 
 
 if __name__ == "__main__":
-    pytest.main(__file__)
+    sys.argv.append(__name__)
+    nose.run()
