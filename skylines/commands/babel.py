@@ -92,7 +92,6 @@ def extract():
         ' --copyright-holder="' + __title__ + ' team"'
         ' --msgid-bugs-address="' + __email__ + '"'
         ' -F %(BABEL_FOLDER)s/babel.cfg'
-        ' -k l_'
         ' -w 79'
         ' -o %(POT_PATH)s .')
 
