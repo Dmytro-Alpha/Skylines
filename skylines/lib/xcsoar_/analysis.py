@@ -314,14 +314,11 @@ def get_analysis_times(times):
     return chosen_period
 
 
-def run_analyse_flight(flight,
-                       full=None, triangle=None, sprint=None,
-                       fp=None):
+def run_analyse_flight(flight, full=None, triangle=None, sprint=None):
     limits = get_limits()
 
-    if not fp:
-        filename = files.filename_to_path(flight.igc_file.filename)
-        fp = flight_path(filename, add_elevation=True, max_points=None)
+    filename = files.filename_to_path(flight.igc_file.filename)
+    fp = flight_path(filename, add_elevation=True, max_points=None)
 
     if len(fp) < 2:
         return None
@@ -383,13 +380,12 @@ def run_analyse_flight(flight,
         return None
 
 
-def analyse_flight(flight, full=512, triangle=1024, sprint=64, fp=None):
+def analyse_flight(flight, full=512, triangle=1024, sprint=64):
     path = files.filename_to_path(flight.igc_file.filename)
     current_app.logger.info('Analyzing ' + path)
 
     root = run_analyse_flight(
-        flight, full=full, triangle=triangle, sprint=sprint,
-        fp=fp)
+        flight, full=full, triangle=triangle, sprint=sprint)
 
     if root is None:
         current_app.logger.warning('Analyze flight failed.')
