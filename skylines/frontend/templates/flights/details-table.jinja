@@ -9,11 +9,7 @@
     {%- if flight.date_local %}
     <tr>
       <th>{% trans %}Date{% endtrans %}</th>
-      <td>
-        <a href="{{ url_for('flights.date', date=(flight.date_local).strftime('%Y-%m-%d')) }}">
-          {{ h.format_date(flight.date_local) }}
-        </a>
-      </td>
+      <td>{{ h.format_date(flight.date_local) }}</td>
     </tr>
     {%- endif %}
 
