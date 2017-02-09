@@ -2,6 +2,7 @@ import datetime
 
 import xcsoar
 from flask import current_app
+from skylines.model import db
 from skylines.lib import files
 from skylines.lib.datetime import from_seconds_of_day
 from skylines.lib.xcsoar_.flightpath import flight_path
@@ -207,7 +208,7 @@ def save_phases(root, flight):
         ph.glide_rate = phdata['glide_rate']
         ph.count = 1
 
-        flight._phases.append(ph)
+        db.session.add(ph)
 
     for statname in ["total", "left", "right", "mixed"]:
         phdata = root['performance']["circling_%s" % statname]
@@ -221,7 +222,7 @@ def save_phases(root, flight):
         ph.vario = phdata['vario']
         ph.count = phdata['count']
 
-        flight._phases.append(ph)
+        db.session.add(ph)
 
     phdata = root['performance']['cruise_total']
     ph = FlightPhase(flight=flight)
@@ -237,7 +238,7 @@ def save_phases(root, flight):
     ph.glide_rate = phdata['glide_rate']
     ph.count = phdata['count']
 
-    flight._phases.append(ph)
+    db.session.add(ph)
 
 
 def get_limits():
