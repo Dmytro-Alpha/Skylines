@@ -101,7 +101,10 @@ def _get_flight_path(flight, threshold=0.001, max_points=3000):
 
     encoded_flight = xcsoar_flight.encode()
 
-    points = encoded_flight['locations']
+    encoded = dict(points=encoded_flight['locations'],
+                   levels=encoded_flight['levels'],
+                   zoom_levels=zoom_levels)
+
     barogram_t = encoded_flight['times']
     barogram_h = encoded_flight['altitude']
     enl = encoded_flight['enl']
@@ -109,7 +112,7 @@ def _get_flight_path(flight, threshold=0.001, max_points=3000):
     elevations_t, elevations_h = _get_elevations(flight)
     contest_traces = _get_contest_traces(flight)
 
-    return dict(points=points,
+    return dict(encoded=encoded, zoom_levels=zoom_levels, num_levels=num_levels,
                 barogram_t=barogram_t, barogram_h=barogram_h,
                 enl=enl, contests=contest_traces,
                 elevations_t=elevations_t, elevations_h=elevations_h,
@@ -304,7 +307,9 @@ def json():
         abort(404)
 
     resp = make_response(jsonify(
-        points=trace['points'],
+        encoded=trace['encoded'],
+        num_levels=trace['num_levels'],
+        zoom_levels=trace['zoom_levels'],
         barogram_t=trace['barogram_t'],
         barogram_h=trace['barogram_h'],
         enl=trace['enl'],

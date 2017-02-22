@@ -90,9 +90,10 @@ all_css = Bundle(
     output='css/skylines-%(version)s.css')
 
 openlayers_css = Bundle(
-    'vendor/openlayers/ol.css',
-    'css/ol-GraphicLayerSwitcher-v3.css',
+    'vendor/openlayers/OpenLayers.css',
+    'css/ol-GraphicLayerSwitcher.css',
     'css/ol-PlayButton.css',
+    'css/ol-ZoomControl.css',
     'css/map.css',
     'css/map-infobox.css',
     filters='cssmin, cssrewrite',
@@ -110,9 +111,9 @@ all_js = Bundle(
     output='js/skylines-%(version)s.js')
 
 openlayers_js = Bundle(
-    'vendor/openlayers/ol.js',
-    'js/ol-GraphicLayerSwitcher-v3.js',
-    'js/ol-PlayButton-v3.js',
+    'vendor/openlayers/OpenLayers.js',
+    'js/ol-GraphicLayerSwitcher.js',
+    'js/ol-PlayButton.js',
     'js/map.js',
     'js/map-click-handler.js',
     filters=SimpleClosureJS,
@@ -141,7 +142,7 @@ upload_js = Bundle(
     'js/baro.js',
     'js/upload.js',
     'http://momentjs.com/downloads/moment.min.js',
-    'https://rawgithub.com/TobiasLohner/bootstrap-datetimepicker/c36342415a1be8fa013548402bf01718ca93d454/src/js/bootstrap-datetimepicker.js',
+    'https://rawgithub.com/TobiasLohner/bootstrap-datetimepicker/7cf8cb30ad2322417d78742346f080a4889d449e/src/js/bootstrap-datetimepicker.js',
     'js/jquery.flot.flight-upload.js',
     filters=SimpleClosureJS,
     output='js/upload-%(version)s.js')

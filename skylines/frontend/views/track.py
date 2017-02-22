@@ -98,7 +98,10 @@ def _get_flight_path(pilot, threshold=0.001, last_update=None):
 
     encoded_flight = xcsoar_flight.encode()
 
-    points = encoded_flight['locations']
+    encoded = dict(points=encoded_flight['locations'],
+                   levels=encoded_flight['levels'],
+                   zoom_levels=zoom_levels)
+
     barogram_t = encoded_flight['times']
     barogram_h = encoded_flight['altitude']
     enl = encoded_flight['enl']
@@ -106,7 +109,7 @@ def _get_flight_path(pilot, threshold=0.001, last_update=None):
     fp_reduced = map(lambda line: FlightPathFix(*line), xcsoar_flight.path())
     elevations = xcsoar.encode([fix.elevation if fix.elevation is not None else UNKNOWN_ELEVATION for fix in fp_reduced], method="signed")
 
-    return dict(points=points,
+    return dict(encoded=encoded, zoom_levels=zoom_levels, num_levels=num_levels,
                 barogram_t=barogram_t, barogram_h=barogram_h, enl=enl,
                 elevations=elevations)
 
@@ -143,7 +146,8 @@ def json():
         abort(404)
 
     return jsonify(
-        points=trace['points'],
+        encoded=trace['encoded'],
+        num_levels=trace['num_levels'],
         barogram_t=trace['barogram_t'],
         barogram_h=trace['barogram_h'],
         elevations=trace['elevations'],

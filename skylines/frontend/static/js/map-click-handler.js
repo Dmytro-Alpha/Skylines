@@ -1,4 +1,4 @@
-slMapClickHandler = function(map, settings) {
+slMapClickHandler = function(infobox, settings) {
   var map_click_handler = {};
 
   // Private attributes
@@ -15,9 +15,6 @@ slMapClickHandler = function(map, settings) {
    */
   var visible = false;
 
-
-  var infobox = null;
-
   // Public attributes and functions
 
   /**
@@ -28,70 +25,103 @@ slMapClickHandler = function(map, settings) {
    * @return {Boolean?}
    */
   map_click_handler.trigger = function(e) {
-    // Hide infobox if it's currently visible
-    if (visible) {
-      e.map.removeOverlay(infobox);
-      hideCircle(0);
-      visible = false;
-      infobox = null;
-      return;
-    }
+    // do nothing if this is visible, let the event handler close the box.
+    if (visible) return;
 
-    if (!infobox) {
-      infobox = new ol.Overlay({
-        element: $("<div id='MapInfoBox' class='InfoBox'></div>")
-      });
-    }
+    var pixel = e.object.events.getMousePosition(e);
 
-    var infobox_element = infobox.getElement();
-    var coordinate = e.coordinate;
+    var loc = map.getLonLatFromPixel(pixel);
+
+    var loc_wgs84 = loc.clone()
+        .transform(map.getProjectionObject(), WGS84_PROJ);
+    var lon = loc_wgs84.lon,
+        lat = loc_wgs84.lat;
+
+    infobox.stop(true, true); // remove any running delays or animations
+    infobox.empty();
 
     if (settings.flight_info) {
-      var flight_path_source = flights.getSource();
-      var closest_feature = flight_path_source
-          .getClosestFeatureToCoordinate(coordinate);
+      // create bounding box in map coordinates around mouse cursor
+      var clickTolerance = 15;
+      var llPx = pixel.add(-clickTolerance / 2, clickTolerance / 2);
+      var urPx = pixel.add(clickTolerance / 2, -clickTolerance / 2);
+      var ll = map.getLonLatFromPixel(llPx);
+      var ur = map.getLonLatFromPixel(urPx);
 
-      if (closest_feature !== null) {
-        var geometry = closest_feature.getGeometry();
-        var closest_point = geometry.getClosestPoint(coordinate);
+      var bounds = new OpenLayers.Bounds(ll.lon, ll.lat, ur.lon, ur.lat);
 
-        var feature_pixel = e.map.getPixelFromCoordinate(closest_point);
-        var mouse_pixel = e.map.getPixelFromCoordinate(coordinate);
+      // search for a aircraft position within the bounding box
+      var nearest = searchForPlane(bounds, loc, clickTolerance);
 
-        var squared_distance = Math.pow(mouse_pixel[0] - feature_pixel[0], 2) +
-                               Math.pow(mouse_pixel[1] - feature_pixel[1], 2);
+      if (nearest !== null) {
+        var index = nearest.from;
+        var flight = nearest.flight;
+        var dx = nearest.along;
 
-        if (squared_distance < 100) {
-          var time = closest_point[2];
-          var sfid = closest_feature.get('sfid');
-          var flight = flights.get(sfid);
+        var lonlat_prev = flight.lonlat[index];
+        var lonlat_next = flight.lonlat[index + 1];
+        lon = lonlat_prev[1] + (lonlat_next[1] - lonlat_prev[1]) * dx;
+        lat = lonlat_prev[0] + (lonlat_next[0] - lonlat_prev[0]) * dx;
 
-          // flight info
-          var flight_info = flightInfo(flight);
-          infobox_element.append(flight_info);
+        var time_prev = flight.t[index];
+        var time_next = flight.t[index + 1];
+        var time = time_prev + (time_next - time_prev) * dx;
 
-          // near flights link
-          var loc = ol.proj.transform(closest_point,
-                                      'EPSG:3857',
-                                      'EPSG:4326');
-          var get_near_flights = nearFlights(loc[0], loc[1], time, flight);
-          infobox_element.append(get_near_flights);
+        // flight info
+        var flight_info = flightInfo(flight);
+        infobox.append(flight_info);
 
-          coordinate = closest_point;
-        }
+        // near flights link
+        var get_near_flights = nearFlights(lon, lat, time, flight);
+        infobox.append(get_near_flights);
       }
     }
 
     if (settings.location_info) {
       // location info
-      var loc = ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
-      var get_location_info = locationInfo(loc[0], loc[1]);
-      infobox_element.append(get_location_info);
+      var get_location_info = locationInfo(lon, lat);
+      infobox.append(get_location_info);
     }
 
-    e.map.addOverlay(infobox);
-    infobox.setPosition(coordinate);
-    showCircle(coordinate);
+    // general events
+
+    map.events.register('move', this, function(e) {
+      if (e.object.getExtent().scale(2).containsLonLat(infobox.latlon)) {
+        var pixel = e.object.getPixelFromLonLat(infobox.latlon);
+        infobox.css('left', (pixel.x + 15) + 'px');
+        infobox.css('top', (pixel.y - infobox.height() / 2) + 'px');
+      } else {
+        infobox.hide();
+        hideCircle(0);
+        visible = false;
+      }
+    });
+
+    // hide box when clicked outside
+    // use OL click event which doesn't get fired on panning
+    map.events.register('click', this, function(e) {
+      var outside = true;
+
+      infobox.children().each(function() {
+        if ($(this).find(e.target).length !== 0) outside = false;
+      });
+
+      if (outside) {
+        infobox.hide();
+        hideCircle(0);
+        visible = false;
+      }
+    });
+
+    infobox.latlon = new OpenLayers.LonLat(lon, lat)
+        .transform(WGS84_PROJ, map.getProjectionObject());
+
+    pixel = e.object.getPixelFromLonLat(infobox.latlon);
+    infobox.css('left', (pixel.x + 15) + 'px');
+    infobox.css('top', (pixel.y - infobox.height() / 2) + 'px');
+
+    infobox.show();
+    showCircle(lon, lat);
 
     visible = true;
 
@@ -120,11 +150,9 @@ slMapClickHandler = function(map, settings) {
         );
 
     get_near_flights.on('click touchend', function(e) {
-      map.removeOverlay(infobox);
+      infobox.hide();
       getNearFlights(lon, lat, time, flight);
       visible = false;
-      infobox = null;
-      e.preventDefault();
     });
 
     return get_near_flights;
@@ -139,7 +167,6 @@ slMapClickHandler = function(map, settings) {
 
     get_location_info.on('click touchend', function(e) {
       getLocationInfo(lon, lat);
-      e.preventDefault();
     });
 
     return get_location_info;
@@ -148,55 +175,41 @@ slMapClickHandler = function(map, settings) {
   /**
    * Show a circle at the clicked position
    *
-   * @param {Array} coordinate Coordinate
+   * @param {Number} lon Longitude.
+   * @param {Number} lat Latitude.
    */
-  function showCircle(coordinate) {
-    var stroke_style = new ol.style.Stroke({
-      color: '#f4bd33',
-      width: 3
-    });
+  function showCircle(lon, lat) {
+    // first, calculate how many map units are 1000 meters. This is
+    // approximate, but close enough for our purpose. In google maps
+    // (and openstreetmap) spherical projection (aka EPSG:900913 or
+    // EPSG:3857), one meter at the equator is exactly one unit.
+    // Cut off at 85 deg.
+    var distance_deg = 1000 / Math.cos(Math.PI / 180 *
+        Math.min(Math.abs(lat, 85)));
 
-    /*
-    var fill_style = new ol.style.Fill({
-      opacity: 0.5,
-      color: '#f4bd00'
-    });
-    */
+    var point = new OpenLayers.Geometry.Point(lon, lat)
+                .transform(WGS84_PROJ, map.getProjectionObject());
 
-    if (!circle)
-      circle = new ol.geom.Circle(coordinate, 1000);
-    else
-      circle.setCenterAndRadius(coordinate, 1000);
+    // make sure there's no other circle on the map
+    var infobox_layer = map.getLayersByName('InfoBox')[0];
+    infobox_layer.destroyFeatures(
+        infobox_layer.getFeatureBy('renderIntent', 'nearestCircle')
+    );
 
-    circle.hide_animation = null;
+    circle = new OpenLayers.Feature.Vector(
+        new OpenLayers.Geometry.Polygon.createRegularPolygon(point,
+            distance_deg, 40, 0));
 
-    map.on('postcompose', function(e) {
-      var vector_context = e.vectorContext;
+    // draw this circle and fade the inner fill within 500ms
+    circle.renderIntent = 'nearestCircle';
 
-      if (circle) {
-        if (circle.hide_animation != null) {
-          var frame_state = e.frameState;
-          if (!circle.hide_animation.start)
-            circle.hide_animation.start = frame_state.time;
+    map.getLayersByName('InfoBox')[0].addFeatures(circle);
 
-          if (circle.hide_animation.duration <= 0 ||
-              frame_state.time >
-              circle.hide_animation.start + circle.hide_animation.duration) {
-            circle = null;
-            return;
-          }
-
-          var delta_time = -(circle.hide_animation.start - frame_state.time) %
-                           circle.hide_animation.duration;
-          stroke_style.setWidth(3 - delta_time /
-                                (circle.hide_animation.duration / 3));
-        }
-
-        vector_context.setFillStrokeStyle(null, stroke_style);
-        vector_context.drawCircleGeometry(circle);
-        map.render();
-      }
-    });
+    // escape points in the id, see
+    // http://docs.jquery.com/Frequently_Asked_Questions#How_do_I_select_an_
+    // element_by_an_ID_that_has_characters_used_in_CSS_notation.3F
+    var circle_id = '#' + circle.geometry.id.replace(/(:|\.)/g, '\\$1');
+    $(circle_id).animate({fillOpacity: 0}, 500);
   };
 
   /**
@@ -205,7 +218,19 @@ slMapClickHandler = function(map, settings) {
    * @param {Integer} duration Fade duration.
    */
   function hideCircle(duration) {
-    circle.hide_animation = { duration: duration, start: null };
+    if (circle === null) return;
+
+    var circle_id = '#' + circle.geometry.id.replace(/(:|\.)/g, '\\$1');
+    // fade circle out and remove it from layer
+    $(circle_id).fadeOut(duration, function() {
+      // check if circle still exists, because it might got deleted before
+      // the animation was done.
+      if (circle !== null) {
+        var infobox_layer = map.getLayersByName('InfoBox')[0];
+        infobox_layer.destroyFeatures(circle);
+        circle = null;
+      }
+    });
   };
 
   /**
@@ -231,6 +256,8 @@ slMapClickHandler = function(map, settings) {
         addFlight(
             flight.sfid,
             flight.encoded.points,
+            flight.encoded.levels,
+            flight.num_levels,
             flight.barogram_t,
             flight.barogram_h,
             flight.enl,
@@ -273,20 +300,13 @@ slMapClickHandler = function(map, settings) {
   function showLocationData(data) {
     if (!visible) return; // do nothing if infobox is closed already
 
-    infobox.getElement().empty();
+    infobox.empty();
     var item = $('<div class="location info-item"></div>');
     var no_data = true;
 
     if (data) {
-      var airspace_layer = map.getLayers().getArray().filter(function(e) {
-        return e.get('name') == 'Airspace';
-      })[0];
-      var mwp_layer = map.getLayers().getArray().filter(function(e) {
-        return e.get('name') == 'Mountain Wave Project';
-      })[0];
-
       if (!$.isEmptyObject(data.airspaces) &&
-          airspace_layer.getVisible()) {
+          map.getLayersByName('Airspace')[0].visibility) {
         var p = $('<p></p>');
         p.append(formatAirspaceData(data.airspaces));
         item.append(p);
@@ -294,7 +314,7 @@ slMapClickHandler = function(map, settings) {
       }
 
       if (!$.isEmptyObject(data.waves) &&
-          mwp_layer.getVisible()) {
+          map.getLayersByName('Mountain Wave Project')[0].visibility) {
         var p = $('<p></p>');
         p.append(formatMountainWaveData(data.waves));
         item.append(p);
@@ -305,17 +325,19 @@ slMapClickHandler = function(map, settings) {
     if (no_data) {
       item.html('No data retrieved for this location');
 
-      infobox.getElement().delay(1500).fadeOut(1000, function() {
-        map.removeOverlay(infobox);
+      infobox.delay(1500).fadeOut(1000, function() {
+        infobox.hide();
         visible = false;
       });
 
       hideCircle(1000);
     }
 
-    infobox.getElement().append(item);
+    infobox.append(item);
 
-    //infobox.setOffset([15, infobox.getElement().height() / 2]);
+    var pixel = map.getPixelFromLonLat(infobox.latlon);
+    infobox.css('left', (pixel.x + 15) + 'px');
+    infobox.css('top', (pixel.y - infobox.height() / 2) + 'px');
   };
 
   /**
