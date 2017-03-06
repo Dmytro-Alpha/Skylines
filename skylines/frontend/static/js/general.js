@@ -1,10 +1,4 @@
-/**
- * Pads a number with leading zeros
- *
- * @param {Number} num Number to pad
- * @param {Number} size Width of returned string
- * @return {String} Padded number
- */
+// add leading zeros to a number
 function pad(num, size) {
   var s = '000000000' + num;
   return s.substr(s.length - size);
@@ -12,9 +6,9 @@ function pad(num, size) {
 
 
 /**
- * Saves the flight id into the pinnedFlights cookie
+ * Saves the flight id into a cookie
  *
- * @param {Number} sfid SkyLines flight ID.
+ * @param {int} sfid SkyLines flight ID.
  */
 function pinFlight(sfid) {
   var pinnedFlights = getPinnedFlights();
@@ -31,9 +25,9 @@ function pinFlight(sfid) {
 
 
 /**
- * Removes a pinned flight from the pinnedFlights cookie
+ * Removes a pinned flight
  *
- * @param {Number} sfid SkyLines flight ID.
+ * @param {int} sfid SkyLines flight ID.
  */
 function unpinFlight(sfid) {
   var pinnedFlights = getPinnedFlights();
@@ -51,9 +45,9 @@ function unpinFlight(sfid) {
 
 
 /**
- * Gets all pinned flights from the pinnedFlight cookie
+ * Gets all pinned flights from the cookie
  *
- * @return {Array<Number>} Array of SkyLines flight IDs.
+ * @return {Array(int)} Array of SkyLines flight IDs.
  */
 function getPinnedFlights() {
   var cookie = $.cookie('SkyLines_pinnedFlights');
@@ -73,10 +67,8 @@ function getPinnedFlights() {
 
 
 /**
- * Checks if the flight id is a pinned flight
- *
- * @param {Number} sfid SkyLines flight ID.
- * @return {Boolean} True if the flight is pinned.
+ * @param {int} sfid SkyLines flight ID.
+ * @return {bool} pinned flight or not pinned flight.
  */
 function isPinnedFlight(sfid) {
   var pinnedFlights = getPinnedFlights();
@@ -90,10 +82,8 @@ function isPinnedFlight(sfid) {
 
 
 /**
- * Adds event handlers to the pin button.
- *
- * @param {jQuery} element jQuery element which will be the button.
- * @param {Number} sfid SkyLines flight ID.
+ * @param {Object} element jQuery element which will be the button.
+ * @param {int} sfid SkyLines flight ID.
  */
 function pinButton(element, sfid) {
   var onClick = function() {
@@ -123,7 +113,7 @@ function pinButton(element, sfid) {
  * Returns the URL for the current page and add pinned flights
  * to the URL which are only stored client-side inside a cookie.
  *
- * @param {String} url The original URL.
+ * @param {String} url original URL.
  * @return {String} URL for the current flights including pinned flights.
  */
 function getShareUrl(url) {
@@ -155,13 +145,4 @@ function showPinnedFlightsLink() {
   } else {
     $('#pinned-flights-link').hide();
   }
-}
-
-/**
- * Checks if the canvas element is supported
- * @return {Boolean} True if it's supported
- */
-function isCanvasSupported() {
-  var elem = document.createElement('canvas');
-  return !!(elem.getContext && elem.getContext('2d'));
 }

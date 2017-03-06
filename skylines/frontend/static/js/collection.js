@@ -52,29 +52,13 @@ slCollection = function() {
   collection.get = function(id) {
     for (var i = 0, len = collection.length(); i < len; ++i) {
       var object = collection.at(i);
-      if (object.getID() == id)
+      if (object.sfid == id)
         return object;
     }
 
     return null;
   };
 
-  /**
-   * Returns all objects with the specified id, or null.
-   * @param  {Number} id
-   * @return {?Object}
-   */
-  collection.all = function(id) {
-    var objects = [];
-    for (var i = 0, len = collection.length(); i < len; ++i) {
-      var object = collection.at(i);
-      if (object.getID() == id)
-        objects.push(object);
-    }
-
-    if (objects) return objects;
-    else return null;
-  };
 
   /**
    * Returns true if a object with the specified id is part of the collection.
@@ -100,15 +84,13 @@ slCollection = function() {
   /**
    * Removes the object with the specified id.
    * @param  {Number} id
-   * @return {Boolean} true if success
+   * @return {Bool} true if success
    */
   collection.remove = function(id) {
     for (var i = 0, len = collection.length(); i < len; ++i) {
       var object = collection.at(i);
-      if (object.getID() == id) {
-        $(collection).triggerHandler('preremove', object);
+      if (object.sfid == id) {
         data_.splice(i, 1);
-        $(collection).triggerHandler('removed', id);
         return true;
       }
     }
