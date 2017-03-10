@@ -127,7 +127,7 @@
     var map_click_handler = slMapClickHandler(map, flight_display,
                                               {flight_info: true, location_info: true});
 
-    var phase_highlighter = slPhaseHighlighter(sl_map.getMap(),
+    var phase_highlighter = slPhaseHighlighter(sl_map,
                                                flight_display.getBaro(),
                                                flight_display.getFlights());
 
@@ -232,36 +232,7 @@
 
         <div class="tab-pane" id="tab-comments">
           <h3><i class="icon-comments-alt"></i> {% trans %}Comments{% endtrans %}</h3>
-          <table class="table">
-            {%- for comment in flight.comments %}
-            <tr>
-              <td>
-                {%- if comment.user %}
-                <span style="float:left">
-                  {{ user_link(comment.user) }}:&nbsp;
-                </span>
-                {%- endif %}
-
-                {{ h.markdown.convert(comment.text)|safe }}
-              </td>
-            </tr>
-            {%- else %}
-            <tr>
-              <td><em>{% trans %}No comments yet.{% endtrans %}</em></td>
-            </tr>
-            {%- endfor %}
-
-            {%- if g.current_user %}
-            <tr>
-              <td>
-                <form action="add_comment" method="POST">
-                  <textarea name="text" class="form-control"></textarea><br/>
-                  <input type="submit" value="{{ _('Add comment') }}" class="btn btn-primary"/>
-                </form>
-              </td>
-            </tr>
-            {%- endif %}
-          </table>
+          {{ comments|safe }}
         </div>
 
         <div class="tab-pane" id="tab-stats-total">
@@ -296,8 +267,8 @@
 
   <div class="col-md-8">
     {%- if trace %}
-    <div id="map_canvas" style="width:100%; height:400pt;"></div>
-    <div id="barogram" style="width:100%; height:120pt; margin-top: 5px"></div>
+    <div id="map_canvas" style="width:100%; height:533px;"></div>
+    <div id="barogram" style="width:100%; height:160px; margin-top: 5px"></div>
     <table id="fix-data" class="table table-condensed"></table>
     {%- else %}
       {% trans %}An error occurred while decoding this flight.{% endtrans %}
