@@ -75,7 +75,6 @@ main_css = Bundle(
     'css/tracking-table.css',
     'css/slFixTable.css',
     'css/wingman.css',
-    'css/ol3-sidebar.css',
     'vendor/flags/flags.css',
     'vendor/bootstrap-datepicker/datepicker.css',
     'vendor/fonts/stylesheet.css',
@@ -131,7 +130,6 @@ flight_js = Bundle(
     'js/slPhaseHighlighter.js',
     'js/slMapIconHandler.js',
     'js/slFlightDisplay.js',
-    'https://raw.githubusercontent.com/Turbo87/sidebar-v2/v0.2.1/js/jquery-sidebar.min.js',
     filters=SimpleClosureJS,
     output='js/flight-%(version)s.js')
 

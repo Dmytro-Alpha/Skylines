@@ -4,10 +4,6 @@
 
 {% from 'flights/meta-tags.jinja' import flight_meta_tags with context %}
 {% from 'flights/macros.jinja' import flight_title with context %}
-{% from 'flights/details-table.jinja' import render_details_table with context %}
-{% from 'flights/wingman-table.jinja' import render_wingman_table with context %}
-{% from 'flights/phases-table.jinja' import render_circling_performance, render_cruise_performance,
-                                            render_leg_statistics, render_phases_condensed with context %}
 
 
 {% block title -%}{{ flight_title(flight) }}{%- endblock %}
@@ -45,15 +41,6 @@
 
 <script type="text/javascript">
   $(function() {
-    var sidebar = $('#sidebar').sidebar();
-
-    $("#barogram_panel").resize(function() {
-      var height = $("#barogram_panel").height() + 10;
-      sidebar.css('bottom', height);
-      $(".ol-scale-line").css('bottom', height);
-      $(".ol-attribution").css('bottom', height);
-    });
-
     if (!isCanvasSupported()) {
       $("#map_canvas").html('<b>Your browser is too old to display this map.<br />' +
                             'Please update to a current version.</b>');
@@ -81,9 +68,14 @@
     {%- endfor %}
     {%- endif %}
 
-    var getPadding = function() { return [20, 20, $("#barogram_panel").height() + 20, sidebar.width() + 20]; };
+    var factor = $("#barogram")[0].offsetHeight / map.getSize()[1];
+
+    var view = map.getView();
     var extent = flight_display.getFlights().getBounds();
-    sl_map.fitExtentPadded(extent, map.getSize(), getPadding());
+    var buffer = Math.max(ol.extent.getWidth(extent), ol.extent.getHeight(extent));
+    extent = ol.extent.buffer(extent, buffer * 0.02);
+    extent[1] -= ol.extent.getHeight(extent) * factor * 3/2;
+    view.fitExtent(extent, map.getSize());
 
     var pinnedFlights = getPinnedFlights();
     for (i in pinnedFlights)
@@ -96,161 +88,17 @@
 
     var map_click_handler = slMapClickHandler(map, flight_display,
                                               {flight_info: true, location_info: true});
-
-    var phase_highlighter = slPhaseHighlighter(sl_map,
-                                               flight_display.getBaro(),
-                                               flight_display.getFlights(),
-                                               getPadding);
-
-    $('#flight-details-table').find('[rel=tooltip]').tooltip();
-
-    sidebar.on('content', function (e, args) {
-      if (args.id == 'tab-stats-legs') {
-        phase_highlighter.addTable($('#leg-table-olc_plus-classic'));
-        phase_highlighter.addTable($('#leg-table-olc_plus-triangle'));
-      } else if (args.id == 'tab-stats-phases') {
-        phase_highlighter.addTable($('#phases-table'));
-      } else if (args.id == 'tab-wingmen') {
-        $('#wingman-table').find('tbody').find('tr').each(function(index, row) {
-          $(this).on('click', function() {
-            var sfid = $(this).data('sfid');
-            if (flight_display.getFlights().has(sfid)) {
-              flight_display.getFlights().remove(sfid);
-              unpinFlight(sfid);
-            } else {
-              flight_display.addFlightFromJSON("/flights/" + sfid + "/json");
-              pinFlight(sfid);
-            }
-          });
-        });
-
-        $('#wingman-table').find('[rel=popover]').popover({
-          html: true,
-          container: 'body',
-          title: 'Periods',
-          placement: 'right',
-          trigger: 'hover',
-          template: '<div class="popover" style="white-space: nowrap; z-index: 5000;">' +
-                       '<div class="arrow"></div>' +
-                       '<h3 class="popover-title"></h3>' +
-                       '<div class="popover-content"></div>' +
-                    '</div>'
-        });
-
-        $('#wingman-table').find('[rel=tooltip]').tooltip();
-      }
-    });
   });
 </script>
 {%- endblock %}
 
 
 {%- block content %}
-<div id="sidebar" class="sidebar collapsed">
-<!-- Nav tabs -->
-  <ul class="sidebar-tabs" role="tablist">
-    <li>
-      <a href="#tab-overview" title="{{ _('Overview') }}" role="tab">
-        <i class="icon-info icon-large"></i>
-      </a>
-    </li>
-    <li>
-      <a href="#tab-comments" title="{{ _('Comments') }}" role="tab">
-        <i class="icon-comments-alt icon-large"></i>
-        {% if flight.comments[0] -%}
-        ({{ flight.comments|count }})
-        {%- endif %}
-      </a>
-    </li>
-    <li>
-      <a href="#tab-stats-total" title="{{ _('Total') }}" role="tab">
-        <i class="icon-bar-chart icon-large"></i> {% trans %}Total{% endtrans %}
-      </a>
-    </li>
-    <li>
-      <a href="#tab-stats-legs" title="{{ _('Leg Statistics') }}" role="tab">
-        <i class="icon-resize-horizontal icon-large"></i> {% trans %}Legs{% endtrans %}
-      </a>
-    </li>
-
-    {%- if flight.has_phases %}
-    <li>
-      <a href="#tab-stats-phases" title="{{ _('Phase Statistics') }}" role="tab">
-        <i class="icon-step-forward icon-large"></i> {% trans %}Phase Statistics{% endtrans %}
-      </a>
-    </li>
-    {%- endif %}
-
-    <li>
-      <a href="#tab-wingmen" title="{{ _('Wingmen') }}" role="tab">
-        <i class="icon-group icon-large"></i>
-      </a>
-    </li>
-  </ul>
-<!-- Tab panes -->
-  <div class="sidebar-content active">
-    <div class="sidebar-pane" id="tab-overview">
-      <h3>{% trans %}Overview{% endtrans %}</h3>
-      <div class="sidebar-pane-content">
-      {{ render_details_table(flight) }}
-
-        <p>
-          <span id="pinned" rel="tooltip" title="{{ _('Activate this to show the flight on top of other flights on the map') }}"></span>
-        </p>
-      </div>
-    </div>
-    <div class="sidebar-pane" id="tab-comments">
-      <h3><i class="icon-comments-alt"></i> {% trans %}Comments{% endtrans %}</h3>
-      <div class="sidebar-pane-content">
-        {{ comments|safe }}
-      </div>
-    </div>
-    <div class="sidebar-pane" id="tab-stats-total">
-      <h3>{% trans %}Statistics{% endtrans %}</h3>
-      <div class="sidebar-pane-content">
-        <h3>{% trans %}Circling performance{% endtrans %}</h3>
-        {{ render_circling_performance(flight) }}
-
-        <h3>{% trans %}Cruise performance{% endtrans %}</h3>
-        {{ render_cruise_performance(flight) }}
-      </div>
-    </div>
-    <div class="sidebar-pane" id="tab-stats-legs">
-      <h3>{% trans %}Legs{% endtrans %}</h3>
-      <div class="sidebar-pane-content">
-        <h3>{% trans %}Distance{% endtrans %}</h3>
-        {{ render_leg_statistics(flight, 'olc_plus', 'classic') }}
-
-        <h3>{% trans %}Triangle{% endtrans %}</h3>
-        {{ render_leg_statistics(flight, 'olc_plus', 'triangle') }}
-      </div>
-    </div>
-
-    {%- if flight.has_phases %}
-    <div class="sidebar-pane" id="tab-stats-phases">
-      <h3>{% trans %}Phase Statistics{% endtrans %}</h3>
-      <div class="sidebar-pane-content">
-        <div class="table-responsive">
-          {{ render_phases_condensed(flight) }}
-        </div>
-      </div>
-    </div>
-    {%- endif %}
-
-    <div class="sidebar-pane" id="tab-wingmen">
-      <h3>{% trans %}Wingmen{% endtrans %}</h3>
-      <div class="sidebar-pane-content">
-        {{ render_wingman_table(near_flights) }}
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="map_canvas" class="olFullscreen sidebar-map"></div>
-<div id="barogram_panel" class="map-bottom-panel map-overlay">
+<div id="map_canvas" class="olFullscreen"></div>
+<div style="position: absolute; bottom: 0; width:100%; background-color: white; opacity: 0.8;">
     <div style="overflow: auto; max-height: 115px">
         <table id="fix-data" class="table table-condensed"></table>
     </div>
-    <div id="barogram" style="width:100%; height:133px;"></div>
+    <div id="barogram" style="width:100%; height:100pt;"></div>
 </div>
 {%- endblock %}
