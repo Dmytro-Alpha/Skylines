@@ -10,7 +10,6 @@ __conversion_dict = {
     'zh_TW': 'cn',
     'zh_Hant_TW': 'cn',
     'cs': 'cz',
-    'sl': 'si',
 }
 
 
