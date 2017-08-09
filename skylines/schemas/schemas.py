@@ -59,15 +59,15 @@ class ClubSchema(Schema):
 
 class UserSchema(Schema):
     id = fields.Integer(dump_only=True)
-    email = fields.String(attribute='email_address', validate=(
+    email = fields.String(attribute='email_address', required=True, validate=(
         validate.Email(),
         validate.Length(max=255),
     ))
-    firstName = fields.String(attribute='first_name', strip=True, validate=(
+    firstName = fields.String(attribute='first_name', required=True, strip=True, validate=(
         validate.NotEmpty(),
         validate.Length(min=1, max=255),
     ))
-    lastName = fields.String(attribute='last_name', strip=True, validate=(
+    lastName = fields.String(attribute='last_name', required=True, strip=True, validate=(
         validate.NotEmpty(),
         validate.Length(min=1, max=255),
     ))
@@ -85,6 +85,9 @@ class UserSchema(Schema):
 
 
 class CurrentUserSchema(UserSchema):
+    password = fields.String(required=True, load_only=True, validate=validate.Length(min=6))
+    currentPassword = fields.String(load_only=True)
+
     trackingKey = fields.String(attribute='tracking_key_hex', dump_only=True)
 
     distanceUnit = fields.Integer(attribute='distance_unit', validate=validate.Range(min=0, max=len(DISTANCE_UNITS) - 1))
