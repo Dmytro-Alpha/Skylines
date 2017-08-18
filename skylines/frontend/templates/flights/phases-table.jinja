@@ -7,10 +7,10 @@
       <th class='numeric'>{% trans %}Duration{% endtrans %}<br/>&Delta;H</th>
     </tr>
     {% with perf=flight.circling_performance -%}
-      {{ circling_performance_row(phase_formatter(perf.total)) }}
-      {{ circling_performance_row(phase_formatter(perf.left)) }}
-      {{ circling_performance_row(phase_formatter(perf.right)) }}
-      {{ circling_performance_row(phase_formatter(perf.mixed)) }}
+      {% if perf.total %}{{ circling_performance_row(phase_formatter(perf.total)) }}{% endif %}
+      {% if perf.left %}{{ circling_performance_row(phase_formatter(perf.left)) }}{% endif %}
+      {% if perf.right %}{{ circling_performance_row(phase_formatter(perf.right)) }}{% endif %}
+      {% if perf.mixed %}{{ circling_performance_row(phase_formatter(perf.mixed)) }}{% endif %}
     {%- endwith %}
   </tbody>
 </table>
@@ -22,42 +22,4 @@
   <td class='numeric'>{{ phase.count }}<br/>{{ phase.vario }}</td>
   <td class='numeric'><abbr title="{{ phase.fraction }}">{{ phase.duration }}</abbr><br/>{{ phase.alt_diff }}</td>
 </tr>
-{%- endmacro %}
-
-{% macro render_cruise_performance(flight) -%}
-<table class="table table-condensed">
-    {% with ph=flight.cruise_performance -%}
-    {% with phase=phase_formatter(ph) -%}
-    <tr>
-      <th>{% trans %}Duration{% endtrans %}</th>
-      <td>{{ phase.duration }} ({{ phase.fraction }})</td>
-    </tr>
-    <tr>
-      <th>&Delta;H</th>
-      <td>{{ phase.alt_diff }}</td>
-    </tr>
-    <tr>
-      <th>{% trans %}Distance{% endtrans %}</th>
-      <td>{{ phase.distance }}</td>
-    </tr>
-    <tr>
-      <th>{% trans %}Avg. vario{% endtrans %}</th>
-      <td>{{ phase.vario }}</td>
-    </tr>
-    <tr>
-      <th>{% trans %}Avg. speed{% endtrans %}</th>
-      <td>{{ phase.speed }}</td>
-    </tr>
-    <tr>
-      <th><abbr title="{% trans %}Glide Rate{% endtrans %}">{% trans %}GR{% endtrans %}</abbr></th>
-      <td>{{ phase.glide_rate }}</td>
-    </tr>
-    <tr>
-      <th>{% trans %}Glides{% endtrans %}</th>
-      <td>{{ phase.count }}</td>
-    </tr>
-    {%- endwith %}
-    {%- endwith %}
-  </tbody>
-</table>
 {%- endmacro %}
