@@ -53,7 +53,7 @@ export default Ember.Component.extend({
  */
 function style_function(feature) {
   let color = DEFAULT_COLOR;
-  if (feature.getKeys().includes('color')) {
+  if (feature.getKeys().contains('color')) {
     color = feature.get('color');
   }
 

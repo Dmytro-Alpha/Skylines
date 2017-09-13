@@ -21,6 +21,9 @@ __all__ = ['User']
 class User(db.Model):
     """
     User definition.
+
+    This is the user definition used by :mod:`repoze.who`, which requires at
+    least the ``user_name`` column.
     """
 
     __tablename__ = 'users'
