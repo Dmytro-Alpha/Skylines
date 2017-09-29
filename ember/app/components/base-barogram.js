@@ -3,7 +3,7 @@ import Ember from 'ember';
 import { addAltitudeUnit } from '../utils/units';
 import safeComputed from '../computed/safe-computed';
 
-export default Ember.Component.extend({
+export default Ember.Component.extend(Ember.Evented, {
   layoutName: 'components/base-barogram',
 
   height: 133,
@@ -70,6 +70,10 @@ export default Ember.Component.extend({
 
     this.set('placeholder', placeholder);
     this.set('flot', Ember.$.plot(placeholder, [], opts));
+
+    placeholder.on('plotclick', (event, pos) => {
+      this.trigger('baroclick', pos.x / 1000);
+    });
   },
 
   update() {
