@@ -18,33 +18,10 @@
   </div>
 </div>
 
-{{flight-map
-  flights=fixCalc.flights
-  fixes=fixCalc.fixes
-  hoverEnabled=(not (or fixCalc.isRunning cesiumEnabled))
-  defaultTime=fixCalc.defaultTime
-  onTimeChange=(action (mut fixCalc.time))
-  onExtentChange=(action (mut mapExtent))
-  onCesiumEnabledChange=(action (mut cesiumEnabled))
-  fullscreenElement="#fullscreen-content"
-  class="olFullscreen sidebar-map"}}
-
+{{flight-map fullscreenElement="#fullscreen-content" class="olFullscreen sidebar-map"}}
 <div id="barogram_panel" class="map-bottom-panel map-overlay">
   <div style="overflow: auto; max-height: 115px">
-    {{fix-table
-      flights=fixCalc.flights
-      fixes=fixCalc.fixes
-      selection=selectedFlightId
-      onSelectionChange=(action (mut selectedFlightId))
-      onRemove=(action "removeFlight")}}
+    {{fix-table}}
   </div>
-
-  {{flight-barogram
-    flights=fixCalc.flights
-    selection=selectedFlightId
-    hoverMode=(not fixCalc.isRunning)
-    timeInterval=timeInterval
-    time=fixCalc.time
-    defaultTime=fixCalc.defaultTime
-    onTimeChange=(action (mut fixCalc.time))}}
+  {{flight-barogram}}
 </div>

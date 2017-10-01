@@ -16,7 +16,7 @@
       <th>{{t "club"}}</th>
       <td>
         {{#if user.club}}
-          {{#link-to "club" user.club.id}}{{user.club.name}}{{/link-to}}
+          <a href="/clubs/{{user.club.id}}">{{user.club.name}}</a>
         {{else}}
           [{{t "unassigned"}}]
         {{/if}}
@@ -30,14 +30,14 @@
     {{#if user.followers}}
       <tr>
         <th>{{t "followers"}}</th>
-        <td>{{#link-to "user.followers" user.id}}{{t "NUM-pilots" num=user.followers}}{{/link-to}}</td>
+        <td><a href="/users/{{user.id}}/followers">{{t "NUM-pilots" num=user.followers}}</a></td>
       </tr>
     {{/if}}
 
     {{#if user.following}}
       <tr>
         <th>{{t "following"}}</th>
-        <td>{{#link-to "user.following" user.id}}{{t "NUM-pilots" num=user.following}}{{/link-to}}</td>
+        <td><a href="/users/{{user.id}}/following">{{t "NUM-pilots" num=user.following}}</a></td>
       </tr>
     {{/if}}
   </table>
