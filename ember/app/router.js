@@ -46,7 +46,6 @@ Router.map(function() {
   });
 
   this.route('tracking', function() {
-    this.route('info');
     this.route('details', { path: '/:user_ids' });
   });
 
