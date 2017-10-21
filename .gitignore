@@ -1,6 +1,3 @@
-# Secret environment variables
-.env
-
 # Generated Ember.js files
 skylines/frontend/static
 
