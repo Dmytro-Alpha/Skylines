@@ -27,8 +27,8 @@ def build_ember():
 @task
 def upload_ember():
     with cd(SRC_DIR):
-        run('mkdir -p skylines/frontend/static')
-        put('ember/dist/*', 'skylines/frontend/static')
+        run('mkdir -p skylines/frontend/static/ember')
+        put('ember/dist/*', 'skylines/frontend/static/ember')
 
 
 @task

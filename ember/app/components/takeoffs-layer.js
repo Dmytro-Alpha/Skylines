@@ -13,7 +13,7 @@ export default Ember.Component.extend({
       style: new ol.style.Style({
         image: new ol.style.Icon(({
           anchor: [0.5, 1],
-          src: '/images/marker-gold.png',
+          src: '/vendor/openlayers/img/marker-gold.png',
         })),
       }),
       name: 'Takeoff Locations',

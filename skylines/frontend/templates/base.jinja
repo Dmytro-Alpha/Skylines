@@ -29,12 +29,24 @@
     <link rel='shortcut' href='/favicon.png' type='image/png' />
 
     {% block styles -%}
-    {%- assets 'ember_vendor_css' %}
+    {%- assets 'all_css' %}
       <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}"/>
     {%- endassets %}
-    {%- assets 'ember_app_css' %}
-      <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}"/>
-    {%- endassets %}
+
+    {% if use_ember %}
+      {%- assets 'ember_vendor_css' %}
+        <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}"/>
+      {%- endassets %}
+      {%- assets 'ember_app_css' %}
+        <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}"/>
+      {%- endassets %}
+    {% endif %}
+
+    {% if openlayers or use_ember %}
+      {% assets 'openlayers_css' -%}
+        <link rel="stylesheet" type="text/css" href="{{ ASSET_URL }}" />
+      {%- endassets %}
+    {% endif %}
     {%- endblock %}
 
     {%- endblock %}
@@ -44,6 +56,11 @@
 
 {% block scripts -%}
 
+{%- assets 'all_js' %}
+<script type="text/javascript" src="{{ ASSET_URL }}"></script>
+{%- endassets %}
+
+{% if use_ember %}
 <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=Intl.~locale.en,Intl.~locale.de&unknown=polyfill"></script>
 
 {%- assets 'ember_vendor_js' %}
@@ -53,7 +70,13 @@
 {%- assets 'ember_app_js' %}
 <script type="text/javascript" src="{{ ASSET_URL }}"></script>
 {%- endassets %}
+{% endif %}
 
+{% if openlayers or use_ember %}
+  {% assets 'openlayers_js' -%}
+    <script type="text/javascript" src="{{ ASSET_URL }}"></script>
+  {%- endassets %}
+{% endif %}
 {%- endblock %}
 </body>
 </html>
