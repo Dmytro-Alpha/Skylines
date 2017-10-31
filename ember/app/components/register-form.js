@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import { validator, buildValidations } from 'ember-cp-validations';
-import { task } from 'ember-concurrency';
 
 const Validations = buildValidations({
   email: {
@@ -45,25 +44,29 @@ export default Ember.Component.extend(Validations, {
 
   classNames: ['panel-body'],
 
+  pending: false,
   error: null,
 
-  saveTask: task(function * () {
+  sendRequest() {
     let json = this.getProperties('email', 'firstName', 'lastName', 'password');
 
-    try {
-      yield this.get('ajax').request('/users/new', { method: 'POST', json });
+    this.set('pending', true);
+    this.get('ajax').request('/users/new', { method: 'POST', json }).then(() => {
       window.location = '/login';
 
-    } catch (error) {
+    }).catch(error => {
       this.set('error', error);
-    }
-  }).drop(),
+
+    }).finally(() => {
+      this.set('pending', false);
+    });
+  },
 
   actions: {
     submit() {
       this.validate().then(({ validations }) => {
         if (validations.get('isValid')) {
-          this.get('saveTask').perform();
+          this.sendRequest();
         }
       });
     },

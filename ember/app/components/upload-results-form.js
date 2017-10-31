@@ -1,5 +1,4 @@
 import Ember from 'ember';
-import { task } from 'ember-concurrency';
 
 export default Ember.Component.extend({
   ajax: Ember.inject.service(),
@@ -16,22 +15,25 @@ export default Ember.Component.extend({
   invalidValidations: Ember.computed.filterBy('validations', 'isValid', false),
   isInvalid: Ember.computed.notEmpty('invalidValidations'),
 
-  saveTask: task(function * () {
+  sendChangeRequest() {
     let json = this.get('successfulResults').map(result => {
       let flight = Ember.get(result, 'flight');
       return Ember.getProperties(flight, 'id', 'pilotId', 'pilotName', 'copilotId', 'copilotName',
         'modelId', 'registration', 'competitionId', 'takeoffTime', 'scoreStartTime', 'scoreEndTime', 'landingTime');
     });
 
-    try {
-      yield this.get('ajax').request('/flights/upload/verify', { method: 'POST', json });
+    this.set('pending', true);
+    this.get('ajax').request('/flights/upload/verify', { method: 'POST', json }).then(() => {
       let ids = json.map(flight => flight.id);
       window.location = (ids.length === 1) ? `/flights/${ids[0]}/` : `/flights/list/${ids.join(',')}`;
 
-    } catch (error) {
+    }).catch(error => {
       this.set('error', error);
-    }
-  }).drop(),
+
+    }).finally(() => {
+      this.set('pending', false);
+    });
+  },
 
   actions: {
     submit() {
@@ -39,7 +41,7 @@ export default Ember.Component.extend({
 
       Ember.RSVP.all(validates).then(results => {
         if (results.every(r => r.validations.get('isValid'))) {
-          this.get('saveTask').perform();
+          this.sendChangeRequest();
         }
       });
     },

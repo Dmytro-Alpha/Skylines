@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import { validator, buildValidations } from 'ember-cp-validations';
-import { task } from 'ember-concurrency';
 
 const Validations = buildValidations({
   callsign: {
@@ -20,6 +19,7 @@ export default Ember.Component.extend(Validations, {
 
   callsign: null,
   delay: null,
+  pending: false,
   messageKey: null,
   error: null,
 
@@ -31,30 +31,30 @@ export default Ember.Component.extend(Validations, {
     return (delay === 0) ? '0' : delay;
   }),
 
-  saveTask: task(function * () {
+  sendChangeRequest() {
     let json = {
       trackingCallsign: this.get('callsign'),
       trackingDelay: this.get('delay'),
     };
 
-    try {
-      yield this.get('ajax').request('/settings/', { method: 'POST', json });
-
+    this.set('pending', true);
+    this.get('ajax').request('/settings/', { method: 'POST', json }).then(() => {
       this.setProperties({
         messageKey: 'settings-have-been-saved',
         error: null,
       });
-
-    } catch (error) {
+    }).catch(error => {
       this.setProperties({ messageKey: null, error });
-    }
-  }).drop(),
+    }).finally(() => {
+      this.set('pending', false);
+    });
+  },
 
   actions: {
     submit() {
       this.validate().then(({ validations }) => {
         if (validations.get('isValid')) {
-          this.get('saveTask').perform();
+          this.sendChangeRequest();
         }
       });
     },

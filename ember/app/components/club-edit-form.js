@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import { validator, buildValidations } from 'ember-cp-validations';
-import { task } from 'ember-concurrency';
 
 const Validations = buildValidations({
   name: {
@@ -33,6 +32,7 @@ export default Ember.Component.extend(Validations, {
 
   name: Ember.computed.oneWay('club.name'),
   website: Ember.computed.oneWay('club.website'),
+  pending: false,
   error: null,
 
   init() {
@@ -40,26 +40,29 @@ export default Ember.Component.extend(Validations, {
     this.set('router', Ember.getOwner(this).lookup('router:main'));
   },
 
-  saveTask: task(function * () {
+  sendChangeRequest() {
     let id = this.get('club.id');
     let json = this.getProperties('name', 'website');
 
-    try {
-      yield this.get('ajax').request(`/clubs/${id}/`, { method: 'POST', json });
+    this.set('pending', true);
+    this.get('ajax').request(`/clubs/${id}/`, { method: 'POST', json }).then(() => {
       this.set('club.name', json.name);
       this.set('club.website', json.website);
       this.get('router').transitionTo('club', id);
 
-    } catch (error) {
+    }).catch(error => {
       this.set('error', error);
-    }
-  }).drop(),
+
+    }).finally(() => {
+      this.set('pending', false);
+    });
+  },
 
   actions: {
     submit() {
       this.validate().then(({ validations }) => {
         if (validations.get('isValid')) {
-          this.get('saveTask').perform();
+          this.sendChangeRequest();
         }
       });
     },

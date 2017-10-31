@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import { validator, buildValidations } from 'ember-cp-validations';
-import { task } from 'ember-concurrency';
 
 const Validations = buildValidations({
   name: {
@@ -25,15 +24,15 @@ export default Ember.Component.extend(Validations, {
   classNames: ['panel', 'panel-default'],
 
   name: null,
+  pending: false,
   messageKey: null,
   error: null,
 
-  saveTask: task(function * () {
+  sendChangeRequest() {
     let json = this.getProperties('name');
 
-    try {
-      let { id } = yield this.get('ajax').request('/settings/club', { method: 'PUT', json });
-
+    this.set('pending', true);
+    this.get('ajax').request('/settings/club', { method: 'PUT', json }).then(({ id }) => {
       this.setProperties({
         messageKey: 'club-was-registered',
         error: null,
@@ -41,16 +40,19 @@ export default Ember.Component.extend(Validations, {
 
       this.get('account').set('club', { id, name: json.name });
 
-    } catch (error) {
+    }).catch(error => {
       this.setProperties({ messageKey: null, error });
-    }
-  }).drop(),
+
+    }).finally(() => {
+      this.set('pending', false);
+    });
+  },
 
   actions: {
     submit() {
       this.validate().then(({ validations }) => {
         if (validations.get('isValid')) {
-          this.get('saveTask').perform();
+          this.sendChangeRequest();
         }
       });
     },

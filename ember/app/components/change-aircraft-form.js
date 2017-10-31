@@ -1,6 +1,5 @@
 import Ember from 'ember';
 import { validator, buildValidations } from 'ember-cp-validations';
-import { task } from 'ember-concurrency';
 
 const Validations = buildValidations({
   registration: {
@@ -30,25 +29,30 @@ export default Ember.Component.extend(Validations, {
   registration: null,
   competitionId: null,
 
+  pending: false,
   error: null,
 
-  saveTask: task(function * () {
+  sendChangeRequest() {
     let id = this.get('flightId');
     let json = this.getProperties('modelId', 'registration', 'competitionId');
 
-    try {
-      yield this.get('ajax').request(`/flights/${id}/`, { method: 'POST', json });
+    this.set('pending', true);
+    this.get('ajax').request(`/flights/${id}/`, { method: 'POST', json }).then(() => {
       window.location = `/flights/${id}/`;
-    } catch (error) {
+
+    }).catch(error => {
       this.set('error', error);
-    }
-  }).drop(),
+
+    }).finally(() => {
+      this.set('pending', false);
+    });
+  },
 
   actions: {
     submit() {
       this.validate().then(({ validations }) => {
         if (validations.get('isValid')) {
-          this.get('saveTask').perform();
+          this.sendChangeRequest();
         }
       });
     },
