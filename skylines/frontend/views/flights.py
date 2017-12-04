@@ -132,7 +132,6 @@ def _create_list(tab, kw, date=None, pilot=None, club=None, airport=None,
     return jsonify(**json)
 
 
-@flights_blueprint.route('/all.json')
 @flights_blueprint.route('/all')
 @vary('accept')
 def all():
@@ -145,13 +144,6 @@ def index():
     return redirect(url_for('.latest'))
 
 
-@flights_blueprint.route('/today')
-def today():
-    """ Fallback for old /flights/today url """
-    return redirect(url_for('.latest'))
-
-
-@flights_blueprint.route('/date/<date>.json')
 @flights_blueprint.route('/date/<date>')
 @vary('accept')
 def date(date, latest=False):
@@ -171,7 +163,6 @@ def date(date, latest=False):
         default_sorting_column='score', default_sorting_order='desc')
 
 
-@flights_blueprint.route('/latest.json')
 @flights_blueprint.route('/latest')
 @vary('accept')
 def latest():
@@ -188,7 +179,6 @@ def latest():
     return date(date_, latest=True)
 
 
-@flights_blueprint.route('/pilot/<int:id>.json')
 @flights_blueprint.route('/pilot/<int:id>')
 @vary('accept')
 def pilot(id):
@@ -208,7 +198,6 @@ def my():
     return redirect(url_for('.pilot', id=g.current_user.id))
 
 
-@flights_blueprint.route('/club/<int:id>.json')
 @flights_blueprint.route('/club/<int:id>')
 @vary('accept')
 def club(id):
@@ -226,7 +215,6 @@ def my_club():
     return redirect(url_for('.club', id=g.current_user.club.id))
 
 
-@flights_blueprint.route('/airport/<int:id>.json')
 @flights_blueprint.route('/airport/<int:id>')
 @vary('accept')
 def airport(id):
@@ -237,7 +225,6 @@ def airport(id):
                         default_sorting_column='date', default_sorting_order='desc')
 
 
-@flights_blueprint.route('/unassigned.json')
 @flights_blueprint.route('/unassigned')
 @vary('accept')
 def unassigned():
@@ -251,7 +238,6 @@ def unassigned():
                         default_sorting_column='date', default_sorting_order='desc')
 
 
-@flights_blueprint.route('/pinned.json')
 @flights_blueprint.route('/pinned')
 @vary('accept')
 def pinned():
@@ -274,7 +260,6 @@ def pinned():
                         default_sorting_column='date', default_sorting_order='desc')
 
 
-@flights_blueprint.route('/list/<ids>.json')
 @flights_blueprint.route('/list/<ids>')
 @vary('accept')
 def list(ids):
@@ -290,26 +275,3 @@ def list(ids):
 
     return _create_list('list', request.args, pinned=ids,
                         default_sorting_column='date', default_sorting_order='desc')
-
-
-@flights_blueprint.route('/igc_headers')
-def igc_headers():
-    """Hidden method that parses all missing IGC headers."""
-
-    if not g.current_user or not g.current_user.is_manager():
-        abort(403)
-
-    igc_files = IGCFile.query().filter(or_(
-        IGCFile.logger_manufacturer_id is None,
-        IGCFile.logger_id is None,
-        IGCFile.model is None,
-        IGCFile.registration is None,
-        IGCFile.competition_id is None,
-        IGCFile.date_utc is None))
-
-    for igc_file in igc_files:
-        igc_file.update_igc_headers()
-
-    db.session.commit()
-
-    return redirect(url_for('.index'))
