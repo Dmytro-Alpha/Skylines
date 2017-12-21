@@ -170,7 +170,7 @@ class NearFlightSchema(Schema):
     times = fields.Nested(MeetingTimeSchema, many=True)
 
 
-@flight_blueprint.route('/api/flights/<flight_id>', strict_slashes=False)
+@flight_blueprint.route('/api/flights/<flight_id>/')
 def read():
     mark_flight_notifications_read(g.flight)
 
@@ -363,7 +363,7 @@ def near():
     return jsonify(flights=map(add_flight_path, flights))
 
 
-@flight_blueprint.route('/api/flights/<flight_id>', methods=['POST'], strict_slashes=False)
+@flight_blueprint.route('/api/flights/<flight_id>/', methods=['POST'])
 def update():
     if not g.flight.is_writable(g.current_user):
         return jsonify(), 403
@@ -459,7 +459,7 @@ def update():
     return jsonify()
 
 
-@flight_blueprint.route('/api/flights/<flight_id>', methods=('DELETE',), strict_slashes=False)
+@flight_blueprint.route('/api/flights/<flight_id>/', methods=('DELETE',))
 def delete():
     if not g.flight.is_writable(g.current_user):
         abort(403)

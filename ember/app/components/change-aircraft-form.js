@@ -38,7 +38,7 @@ export default Ember.Component.extend(Validations, {
 
     try {
       yield this.get('ajax').request(`/api/flights/${id}/`, { method: 'POST', json });
-      this.getWithDefault('onDidSave', Ember.K)();
+      window.location = `/flights/${id}/`;
     } catch (error) {
       this.set('error', error);
     }
