@@ -52,7 +52,7 @@ export default Ember.Component.extend(Validations, {
 
     try {
       yield this.get('ajax').request('/api/users', { method: 'POST', json });
-      this.getWithDefault('transitionTo')('login');
+      window.location = '/login';
 
     } catch (error) {
       this.set('error', error);

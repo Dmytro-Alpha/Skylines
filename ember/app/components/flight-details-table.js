@@ -31,14 +31,12 @@ export default Ember.Component.extend({
   deleteTask: task(function * () {
     let id = this.get('flight.id');
     yield this.get('ajax').request(`/api/flights/${id}/`, { method: 'DELETE' });
-    Ember.$('#deleteModal').modal('hide');
-    this.getWithDefault('transitionTo', Ember.K)('flights');
+    window.location = '/flights/';
   }).drop(),
 
   publishTask: task(function * () {
     let id = this.get('flight.id');
     yield this.get('ajax').request(`/api/flights/${id}/`, { method: 'POST', json: { privacyLevel: 0 } });
-    this.set('flight.privacyLevel', 0);
-    Ember.$('#publishModal').modal('hide');
+    window.location = `/flights/${id}/`;
   }).drop(),
 });
