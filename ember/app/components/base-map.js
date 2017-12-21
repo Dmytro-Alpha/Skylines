@@ -66,7 +66,6 @@ export default Ember.Component.extend({
     this.addMWPLayers();
     this.addBingLayers();
     this.addMapboxLayer();
-    this.addEmptyLayer();
 
     let query = parseQueryString(window.location.search);
     this.set('baseLayer', query.baselayer);
@@ -266,18 +265,4 @@ export default Ember.Component.extend({
     map.addLayer(road);
     map.addLayer(hybrid);
   },
-
-  addEmptyLayer() {
-    let empty_layer = new ol.layer.Tile({
-    });
-    empty_layer.setProperties({
-      'name': 'Empty',
-      'id': 'Empty',
-      'base_layer': true,
-      'display_in_layer_switcher': true,
-    });
-
-    this.get('map').addLayer(empty_layer);
-  },
-
 });
