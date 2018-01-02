@@ -151,12 +151,12 @@
 
   {{#if success}}
     <span class="label label-success">
-      {{fa-icon "check"}} {{t "success"}}
+      <i class="icon-ok"></i> {{t "success"}}
     </span>
 
   {{else}}
     <span class="label label-warning">
-      {{fa-icon "warning"}}
+      <i class="icon-warning-sign"></i>
 
       {{#if (eq status 1)}}{{t "duplicate-file"}}
       {{else if (eq status 2)}}{{t "date-missing-in-igc-file"}}
