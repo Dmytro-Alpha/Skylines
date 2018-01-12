@@ -40,13 +40,9 @@ def test_lva(client, default_headers, fixtures):
     assert data == {
         u'id': id,
         u'name': u'LV Aachen',
-        u'timeCreated': '2016-01-15T12:34:56+00:00',
+        u'created_at': '2016-01-15T12:34:56+00:00',
         u'website': u'http://www.lv-aachen.de',
-        u'isWritable': None,
-        u'owner': {
-            u'id': fixtures['john'].id,
-            u'name': fixtures['john'].name,
-        },
+        u'owner': fixtures['john'].id,
     }
 
 
@@ -63,9 +59,8 @@ def test_sfn(client, default_headers, fixtures):
     assert data == {
         u'id': id,
         u'name': u'Sportflug Niederberg',
-        u'timeCreated': '2016-01-15T12:34:56+00:00',
+        u'created_at': '2016-01-15T12:34:56+00:00',
         u'website': None,
-        u'isWritable': None,
         u'owner': None,
     }
 

@@ -1,29 +1,27 @@
-from flask import Blueprint, request
+from flask import Blueprint
+from webargs import fields
+from webargs.flaskparser import use_args
 
-from skylines.api.json import jsonify
 from skylines.model import User, Club, Airport
 from skylines.model.search import (
-    combined_search_query, text_to_tokens, escape_tokens,
-    process_result_details
+    combined_search_query, text_to_tokens, escape_tokens
 )
+from .json import jsonify
 
 search_blueprint = Blueprint('search', 'skylines')
 
 MODELS = [User, Club, Airport]
 
-
-@search_blueprint.route('/search', strict_slashes=False)
-def index():
-    search_text = request.values.get('text', '').strip()
-    if not search_text:
-        return jsonify(results=[])
-
-    return jsonify(results=search(search_text))
+SEARCH_ARGS = {'q': fields.Str(required=True)}
 
 
-def search(text):
+@search_blueprint.route('/search')
+@use_args(SEARCH_ARGS)
+def index(args):
+    search_text = args['q']
+
     # Split the search text into tokens and escape them properly
-    tokens = text_to_tokens(text)
+    tokens = text_to_tokens(search_text)
     tokens = escape_tokens(tokens)
 
     # Create combined search query
@@ -32,25 +30,22 @@ def search(text):
     # Perform query and limit output to 20 items
     results = query.limit(20).all()
 
-    process_result_details(MODELS, results)
+    results = map(convert, results)
 
-    results_json = []
-    for r in results:
-        result = {
-            'type': r.model.lower(),
-            'id': r.id,
-            'name': r.name,
-        }
+    return jsonify(results)
 
-        if hasattr(r, 'website') and r.website:
-            result['website'] = r.website
 
-        if hasattr(r, 'icao') and r.icao:
-            result['icao'] = r.icao
+def convert(old):
+    new = {'type': old[0].lower(), 'id': old[1], 'name': old[2]}
 
-        if hasattr(r, 'frequency') and r.frequency:
-            result['frequency'] = '%.3f' % (float(r.frequency))
+    if old[0] == 'User':
+        pass
 
-        results_json.append(result)
+    elif old[0] == 'Club':
+        new['website'] = old[3][0]
 
-    return results_json
+    elif old[0] == 'Airport':
+        new['icao'] = old[3][0]
+        new['frequency'] = old[3][1]
+
+    return new
