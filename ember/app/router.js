@@ -79,8 +79,6 @@ Router.map(function() {
   });
 
   this.route('login');
-
-  this.route('page-not-found', { path: '/*wildcard' });
 });
 
 export default Router;
