@@ -1,15 +1,15 @@
 import Ember from 'ember';
 
 import { expect } from 'chai';
-import { setupComponentTest } from 'ember-mocha';
-import { beforeEach, it, describe } from 'mocha';
+import { describeComponent, it } from 'ember-mocha';
+import { beforeEach } from 'mocha';
 import hbs from 'htmlbars-inline-precompile';
 
 import instanceInitializer from '../../../../instance-initializers/ember-intl';
 
-describe('Integration: NewUserTimelineEventComponent', function() {
-  setupComponentTest('timeline-events/new-user', { integration: true });
+let options = { integration: true };
 
+describeComponent('timeline-events/new-user', 'Integration: NewUserTimelineEventComponent', options, function() {
   beforeEach(function() {
     instanceInitializer.initialize(this);
 
