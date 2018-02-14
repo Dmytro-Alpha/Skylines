@@ -1,5 +1,3 @@
-import immobilus  # noqa
-
 import os
 import random
 import shutil
