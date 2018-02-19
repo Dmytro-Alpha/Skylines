@@ -22,11 +22,7 @@ export default Ember.Component.extend({
   },
 
   willDestroyElement() {
-    let picker = this.get('picker');
-    if (picker) {
-      picker.off('changeDate');
-    }
-
+    this.get('picker').off('changeDate');
     this.set('picker', null);
   },
 });
