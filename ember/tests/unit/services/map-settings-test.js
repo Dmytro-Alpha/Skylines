@@ -75,4 +75,61 @@ describe('Unit | Service | map-settings', function() {
     let service = this.subject();
     expect(service.get('overlayLayers')).to.deep.equal([]);
   });
+
+  it('setBaseLayer() changes the "baseLayer" and persists it to the cookie', function() {
+    let writeWasCalled = false;
+    this.register('service:cookies', Service.extend({
+      read() {},
+      write(key, value) {
+        expect(key).to.equal(BASE_LAYER_COOKIE_KEY);
+        expect(value).to.equal('foo');
+        writeWasCalled = true;
+      },
+    }));
+
+    let service = this.subject();
+    expect(service.get('baseLayer')).to.equal('OpenStreetMap');
+
+    service.setBaseLayer('foo');
+    expect(service.get('baseLayer')).to.equal('foo');
+    expect(writeWasCalled).to.be.true;
+  });
+
+  it('toggleOverlayLayer() adds to the existing "overlayLayers" and persists it to the cookie', function() {
+    let writeWasCalled = false;
+    this.register('service:cookies', Service.extend({
+      read() {},
+      write(key, value) {
+        expect(key).to.equal(OVERLAY_LAYERS_COOKIE_KEY);
+        expect(value).to.equal('Airspace;foo');
+        writeWasCalled = true;
+      },
+    }));
+
+    let service = this.subject();
+    expect(service.get('overlayLayers')).to.deep.equal(['Airspace']);
+
+    service.toggleOverlayLayer('foo');
+    expect(service.get('overlayLayers')).to.deep.equal(['Airspace', 'foo']);
+    expect(writeWasCalled).to.be.true;
+  });
+
+  it('toggleOverlayLayer() removes from the existing "overlayLayers" and persists it to the cookie', function() {
+    let writeWasCalled = false;
+    this.register('service:cookies', Service.extend({
+      read() {},
+      write(key, value) {
+        expect(key).to.equal(OVERLAY_LAYERS_COOKIE_KEY);
+        expect(value).to.equal('');
+        writeWasCalled = true;
+      },
+    }));
+
+    let service = this.subject();
+    expect(service.get('overlayLayers')).to.deep.equal(['Airspace']);
+
+    service.toggleOverlayLayer('Airspace');
+    expect(service.get('overlayLayers')).to.deep.equal([]);
+    expect(writeWasCalled).to.be.true;
+  });
 });
