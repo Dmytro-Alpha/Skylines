@@ -67,9 +67,7 @@ export default Component.extend({
     this.addMapboxLayer();
     this.addEmptyLayer();
 
-    let mapSettings = this.get('mapSettings');
-    this.setBaseLayer(mapSettings.get('baseLayer'));
-    this.setOverlayLayers(mapSettings.get('overlayLayers'));
+    this.updateLayerVisibilities();
   },
 
   didInsertElement() {
@@ -80,36 +78,36 @@ export default Component.extend({
     }
   },
 
-  setBaseLayer(base_layer) {
-    if (!base_layer) {
-      return;
-    }
+  updateLayerVisibilities() {
+    let mapSettings = this.get('mapSettings');
+    let baseLayer = mapSettings.get('baseLayer');
+    let overlayLayers = mapSettings.get('overlayLayers');
 
     let fallback = false;
     let map = this.get('map');
 
-    map.getLayers().forEach(layer => {
+    let layers = map.getLayers().getArray().filter(layer => layer.get('display_in_layer_switcher'));
+
+    layers.forEach(layer => {
       if (layer.get('base_layer')) {
-        layer.setVisible(layer.get('name') === base_layer);
-        fallback = fallback || layer.get('name') === base_layer;
+        layer.setVisible(layer.get('name') === baseLayer);
+        fallback = fallback || layer.get('name') === baseLayer;
       }
     });
 
     if (!fallback) {
-      map.getLayers().getArray().filter(function(e) {
+      layers.filter(function(e) {
         return e.get('name') === 'OpenStreetMap';
       })[0].setVisible(true);
     }
-  },
 
-  setOverlayLayers(overlay_layers) {
     // Cycle through the overlay layers to find a match
-    this.get('map').getLayers().forEach(layer => {
-      if (layer.get('base_layer') || !layer.get('display_in_layer_switcher')) {
+    layers.forEach(layer => {
+      if (layer.get('base_layer')) {
         return;
       }
 
-      layer.setVisible($.inArray(layer.get('name'), overlay_layers) !== -1);
+      layer.setVisible($.inArray(layer.get('name'), overlayLayers) !== -1);
     });
   },
 
