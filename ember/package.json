@@ -48,7 +48,7 @@
     "ember-cli-shims": "^1.1.0",
     "ember-cli-uglify": "^2.0.0",
     "ember-concurrency": "^0.8.12",
-    "ember-cookies": "^0.0.13",
+    "ember-cookies": "^0.2.0",
     "ember-cp-validations": "^3.5.1",
     "ember-font-awesome": "^3.1.1",
     "ember-href-to": "^1.13.0",
@@ -67,7 +67,7 @@
     "ember-truth-helpers": "^2.0.0",
     "ember-web-app": "^2.3.0",
     "eslint-config-simplabs": "0.4.0",
-    "eslint-plugin-ember": "^5.1.0",
+    "eslint-plugin-ember": "^5.0.3",
     "eslint-plugin-mocha": "^4.11.0",
     "loader.js": "^4.6.0"
   },
