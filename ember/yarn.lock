@@ -2734,11 +2734,11 @@ electron-to-chromium@^1.3.33:
   version "1.3.33"
   resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.3.33.tgz#bf00703d62a7c65238136578c352d6c5c042a545"
 
-ember-ajax@^3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/ember-ajax/-/ember-ajax-3.0.0.tgz#8f21e9da0c1d433cf879aa855fce464d517e9ab5"
+ember-ajax@^3.1.0:
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/ember-ajax/-/ember-ajax-3.1.0.tgz#3db36e67357ef447639517656aeac4bb13e73a9c"
   dependencies:
-    ember-cli-babel "^6.0.0"
+    ember-cli-babel "^6.6.0"
 
 ember-assign-polyfill@^2.0.1:
   version "2.0.1"
@@ -3260,16 +3260,9 @@ ember-concurrency@^0.8.7:
     ember-cli-babel "^6.8.2"
     ember-maybe-import-regenerator "^0.1.5"
 
-ember-cookies@^0.0.13:
-  version "0.0.13"
-  resolved "https://registry.yarnpkg.com/ember-cookies/-/ember-cookies-0.0.13.tgz#18350df766240793d46744e4ee5c9a55ae6b4e0a"
-  dependencies:
-    ember-cli-babel "^5.1.7"
-    ember-getowner-polyfill "^1.2.2"
-
-ember-cookies@^0.1.0:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/ember-cookies/-/ember-cookies-0.1.2.tgz#f652efcb289534cdc1425832ed3c77aeb432ef72"
+"ember-cookies@^0.1.0 || ^0.2.0", ember-cookies@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/ember-cookies/-/ember-cookies-0.2.0.tgz#81195a31a36447240fb97af47d01ad582f747d47"
   dependencies:
     ember-cli-babel "^6.8.2"
     ember-getowner-polyfill "^1.1.0 || ^2.0.0"
@@ -3591,9 +3584,9 @@ ember-runtime-enumerable-includes-polyfill@^2.0.0:
     ember-cli-babel "^6.0.0"
     ember-cli-version-checker "^1.1.6"
 
-ember-simple-auth@^1.4.2:
-  version "1.4.2"
-  resolved "https://registry.yarnpkg.com/ember-simple-auth/-/ember-simple-auth-1.4.2.tgz#d8de79f4bcfb5830f43e61e43464885801544e94"
+ember-simple-auth@^1.5.1:
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/ember-simple-auth/-/ember-simple-auth-1.5.1.tgz#aa28fda5af5148b4a0ee823302e600598ccff4d8"
   dependencies:
     base-64 "^0.1.0"
     broccoli-file-creator "^1.1.1"
@@ -3601,7 +3594,7 @@ ember-simple-auth@^1.4.2:
     broccoli-merge-trees "^2.0.0"
     ember-cli-babel "^6.8.2"
     ember-cli-is-package-missing "^1.0.0"
-    ember-cookies "^0.1.0"
+    ember-cookies "^0.1.0 || ^0.2.0"
     ember-fetch "^2.1.0 || ^3.0.0"
     ember-getowner-polyfill "^1.1.0 || ^2.0.0"
     silent-error "^1.0.0"
@@ -3864,9 +3857,9 @@ eslint-config-simplabs@0.4.0:
     pify "^2.3.0"
     supports-color "^3.2.3"
 
-eslint-plugin-ember@^5.0.3:
-  version "5.0.3"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-ember/-/eslint-plugin-ember-5.0.3.tgz#9f5e2048ab3ddc1548d4d17bf318cf1bb5cf37f1"
+eslint-plugin-ember@^5.1.0:
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-ember/-/eslint-plugin-ember-5.1.0.tgz#fb96abd2d8bf105678a0aa81dadd99d7ca441ba1"
   dependencies:
     ember-rfc176-data "^0.2.7"
     require-folder-tree "^1.4.5"
