@@ -11,10 +11,8 @@ module.exports = function(defaults) {
       exclude: ['cesium'],
     },
 
-    minifyJS: {
-      options: {
-        exclude: ['cesium/Cesium.js'],
-      },
+    'ember-cli-uglify': {
+      exclude: ['cesium/**/*.js'],
     },
 
     sourcemaps: {
@@ -34,20 +32,6 @@ module.exports = function(defaults) {
       'bootstrapVersion': 3,
       'importBootstrapFont': true,
       'importBootstrapCSS': false,
-    },
-
-    'ember-font-awesome': {
-      includeStaticIcons: [
-        'arrow-left',
-        'arrow-right',
-        'calendar',
-        'chevron-down',
-        'chevron-up',
-        'clock-o',
-        'facebook',
-        'google-plus',
-        'twitter',
-      ],
     },
   });
 
