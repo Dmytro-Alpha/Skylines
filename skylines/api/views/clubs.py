@@ -6,7 +6,7 @@ from skylines.database import db
 from skylines.api.oauth import oauth
 from skylines.lib.dbutil import get_requested_record
 from skylines.model import Club, User
-from skylines.model.notification import (
+from skylines.model.event import (
     create_club_join_event
 )
 
