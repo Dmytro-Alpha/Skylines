@@ -12,6 +12,12 @@ export POSTGIS_GDAL_ENABLED_DRIVERS=GTiff
 export POSTGIS_ENABLE_OUTDB_RASTERS=1
 EOF
 
+sudo bash -c "cat > /etc/apt/sources.list.d/pgdg.list" << EOF
+deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main
+EOF
+
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
 # update apt-get repository
 
 sudo apt-get update
@@ -20,13 +26,9 @@ sudo apt-get update
 
 sudo apt-get install -y --no-install-recommends python-software-properties
 
-# add PPAs
+# add ubuntu-toolchain-r/test PPA
 
-sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-sudo add-apt-repository -y ppa:jonathonf/python-2.7
-
-sudo add-apt-repository -y "deb http://apt.postgresql.org/pub/repos/apt/ trusty-pgdg main"
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+sudo add-apt-repository ppa:ubuntu-toolchain-r/test
 
 # update apt-get repository
 
@@ -35,8 +37,7 @@ sudo apt-get update
 # install base dependencies
 
 sudo apt-get install -y --no-install-recommends \
-    python2.7 python2.7-dev \
-    g++-6 pkg-config libcurl4-openssl-dev git redis-server \
+    g++-6 pkg-config libcurl4-openssl-dev python-dev git redis-server \
     libpq-dev postgresql-9.5-postgis-2.2 postgresql-9.5-postgis-2.2-scripts postgresql-contrib-9.5 \
     libfreetype6-dev libpng-dev libffi-dev
 
