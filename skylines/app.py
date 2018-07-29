@@ -60,7 +60,7 @@ class SkyLines(Flask):
 
     def load_egm96(self):
         from skylines.lib.geoid import load_geoid
-        load_geoid()
+        load_geoid(self)
 
 
 def create_app(*args, **kw):
