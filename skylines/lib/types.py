@@ -13,10 +13,3 @@ def is_string(value):
         return isinstance(value, (str, unicode))
     else:
         return isinstance(value, (bytes, str))
-
-
-def is_unicode(value):
-    if sys.version_info[0] == 2:
-        return isinstance(value, unicode)
-    else:
-        return isinstance(value, str)
