@@ -19,7 +19,8 @@ def test_flake8(folder):
     try:
         run([FLAKE8_COMMAND, folder])
     except CalledProcessError as e:
-        raise AssertionError('flake8 has found errors.\n\n' + e.output.decode('utf-8'))
+        print(e.output)
+        raise AssertionError('flake8 has found errors.')
     except OSError:
         raise OSError('Failed to run flake8. Please check that you have '
                       'installed it properly.')
