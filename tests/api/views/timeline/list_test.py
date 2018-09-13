@@ -90,11 +90,7 @@ def test_event_types(db_session, client):
 
 def test_paging(db_session, client):
     john = users.john()
-    for _ in range(75):
-        event = events.new_user(actor=john)
-        db_session.add(event)
-
-    db_session.commit()
+    add_fixtures(db_session, *[events.new_user(actor=john) for i in range(75)])
 
     res = client.get("/timeline")
     assert res.status_code == 200

@@ -14,6 +14,7 @@ timeline_blueprint = Blueprint("timeline", "skylines")
 def _list():
     query = (
         Event.query()
+        .options(subqueryload("actor"))
         .options(subqueryload("user"))
         .options(subqueryload("club"))
         .outerjoin(Event.flight)
@@ -29,4 +30,4 @@ def _list():
 
     events = query.limit(per_page).offset((page - 1) * per_page).all()
 
-    return jsonify(events=([convert_event(event) for event in events]))
+    return jsonify(events=(map(convert_event, events)))
