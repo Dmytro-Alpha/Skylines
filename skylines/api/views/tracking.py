@@ -99,7 +99,7 @@ def read(user_ids):
 
     color_gen = color.generator()
     for pilot in pilots:
-        pilot.color = next(color_gen)
+        pilot.color = color_gen.next()
 
     traces = map(_get_flight_path, pilots)
     if not any(traces):
