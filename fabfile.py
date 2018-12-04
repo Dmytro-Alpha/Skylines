@@ -3,7 +3,7 @@ from fabric.api import env, task, local, cd, lcd, run, sudo, put
 from tempfile import NamedTemporaryFile
 
 env.use_ssh_config = True
-env.hosts = ["skylines@skylines.aero"]
+env.hosts = ["skylines@skylines"]
 
 APP_DIR = "/home/skylines"
 SRC_DIR = "%s/src" % APP_DIR
@@ -62,9 +62,16 @@ def reload_service(service):
 def manage(cmd, user=None):
     with cd(SRC_DIR):
         if user:
-            sudo("pipenv run ./manage.py %s" % cmd, user=user)
+            sudo("./manage.py %s" % cmd, user=user)
         else:
-            run("pipenv run ./manage.py %s" % cmd)
+            run("./manage.py %s" % cmd)
+
+
+@task
+def pip_install():
+    with cd(SRC_DIR):
+        run("git reset --hard")
+        run("pip install -e .")
 
 
 @task
