@@ -5578,10 +5578,10 @@ ember-cli-dependency-checker@^3.2.0:
     resolve "^1.5.0"
     semver "^5.3.0"
 
-ember-cli-deploy-build@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/ember-cli-deploy-build/-/ember-cli-deploy-build-2.0.0.tgz#20d14836f5e8e1325a5b2c3d43367354783d2008"
-  integrity sha512-o6TCCKVLC85KYkk3TV8PCmEPfUI9R0qYzb7Sda+SIq9f5oR+vOoTsQmjUPyMB5Qou2sBVreUTjgNEaJBzvLtLg==
+ember-cli-deploy-build@^1.1.1:
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/ember-cli-deploy-build/-/ember-cli-deploy-build-1.1.1.tgz#de515b04536a569f42626ef28aea139f32ef00e8"
+  integrity sha512-q6Svm9PhEO2t5bCjsHfwkm36Cdou1eTdzvw00dU/nAHnysmai7sIqEzT7k20zawjGws7CgttZzMz6Oek5TOZ1w==
   dependencies:
     chalk "^1.0.0"
     ember-cli-deploy-plugin "^0.2.1"
@@ -6807,10 +6807,10 @@ escodegen@^1.9.0:
   optionalDependencies:
     source-map "~0.6.1"
 
-eslint-config-prettier@^6.1.0:
-  version "6.1.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-6.1.0.tgz#e6f678ba367fbd1273998d5510f76f004e9dce7b"
-  integrity sha512-k9fny9sPjIBQ2ftFTesJV21Rg4R/7a7t7LCtZVrYQiHEp8Nnuk3EGaDmsKSAnsPj0BYcgB2zxzHa2NTkIxcOLg==
+eslint-config-prettier@^6.2.0:
+  version "6.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-6.2.0.tgz#80e0b8714e3f6868c4ac2a25fbf39c02e73527a7"
+  integrity sha512-VLsgK/D+S/FEsda7Um1+N8FThec6LqE3vhcMyp8mlmto97y3fGf3DX7byJexGuOb1QY0Z/zz222U5t+xSfcZDQ==
   dependencies:
     get-stdin "^6.0.0"
 
