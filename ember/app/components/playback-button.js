@@ -9,6 +9,10 @@ export default Component.extend({
     this.toggle();
   },
 
+  touchEnd() {
+    this.toggle();
+  },
+
   toggle() {
     this.onToggle();
   },

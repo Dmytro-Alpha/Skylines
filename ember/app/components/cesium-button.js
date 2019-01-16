@@ -11,6 +11,10 @@ export default Component.extend({
     this.toggle();
   },
 
+  touchEnd() {
+    this.toggle();
+  },
+
   toggle() {
     if (this.enabled) {
       this.onDisable();
