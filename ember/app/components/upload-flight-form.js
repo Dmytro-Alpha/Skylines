@@ -52,7 +52,7 @@ export default Component.extend(Validations, {
   },
 
   uploadTask: task(function*() {
-    let form = this.element.querySelector('form');
+    let form = this.$('form').get(0);
     let data = new FormData(form);
 
     try {
