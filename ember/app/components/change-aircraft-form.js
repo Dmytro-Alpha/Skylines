@@ -18,9 +18,9 @@ const Validations = buildValidations({
 });
 
 export default Component.extend(Validations, {
-  tagName: '',
-
   ajax: service(),
+
+  classNames: ['panel-body'],
 
   flightId: null,
   models: null,

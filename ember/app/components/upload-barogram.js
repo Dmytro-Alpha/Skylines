@@ -1,4 +1,4 @@
-import { action, computed } from '@ember/object';
+import { computed } from '@ember/object';
 import { readOnly } from '@ember/object/computed';
 import { inject as service } from '@ember/service';
 
@@ -65,8 +65,8 @@ export default BarogramComponent.extend({
     this.set('elevations', flot_elev);
   },
 
-  initFlot: action(function(element) {
-    this._initFlot(element);
+  didInsertElement() {
+    this._super(...arguments);
 
     this.placeholder.on('plotselecting', (event, range, marker) => {
       let date = secondsToDate(this.date, range[marker]);
@@ -84,7 +84,7 @@ export default BarogramComponent.extend({
 
     this.updateSelection();
     this.draw();
-  }),
+  },
 
   didUpdateAttrs() {
     this._super(...arguments);

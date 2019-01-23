@@ -2,7 +2,9 @@ import Component from '@ember/component';
 import { readOnly, or, and, not } from '@ember/object/computed';
 
 export default Component.extend({
-  tagName: '',
+  classNames: ['form-group has-feedback'],
+  classNameBindings: ['_showErrorClass:has-error', 'isValid:has-success'],
+
   validation: null,
   label: null,
   hasContent: true,

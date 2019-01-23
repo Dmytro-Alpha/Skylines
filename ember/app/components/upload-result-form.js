@@ -5,7 +5,7 @@ import { readOnly, alias, equal } from '@ember/object/computed';
 import isNone from '../computed/is-none';
 
 export default Component.extend({
-  tagName: '',
+  classNames: ['row'],
 
   result: null,
   clubMembers: null,

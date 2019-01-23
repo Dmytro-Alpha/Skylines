@@ -2,7 +2,9 @@ import Component from '@ember/component';
 import { or, equal, not } from '@ember/object/computed';
 
 export default Component.extend({
-  tagName: '',
+  tagName: 'tr',
+  classNameBindings: ['isPrivate:not_published'],
+
   flight: null,
 
   pilotName: or('flight.pilot.name', 'flight.pilotName'),

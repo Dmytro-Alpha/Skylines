@@ -24,10 +24,10 @@ const Validations = buildValidations({
 });
 
 export default Component.extend(Validations, {
-  tagName: '',
-
   ajax: service(),
   account: service(),
+
+  classNames: ['panel-body'],
 
   clubMembers: null,
   pilotName: null,
@@ -43,17 +43,16 @@ export default Component.extend(Validations, {
       this.set('files', event.target.value);
     },
 
-    async submit(event) {
-      event.preventDefault();
-
+    async submit() {
       let { validations } = await this.validate();
       if (validations.get('isValid')) {
-        this.uploadTask.perform(event.target);
+        this.uploadTask.perform();
       }
     },
   },
 
-  uploadTask: task(function*(form) {
+  uploadTask: task(function*() {
+    let form = this.element.querySelector('form');
     let data = new FormData(form);
 
     try {

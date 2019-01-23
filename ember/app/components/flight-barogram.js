@@ -1,4 +1,4 @@
-import { action, observer, computed } from '@ember/object';
+import { observer, computed } from '@ember/object';
 
 import safeComputed from '../computed/safe-computed';
 import BarogramComponent from './base-barogram';
@@ -60,15 +60,14 @@ export default BarogramComponent.extend({
 
   timeInterval: null,
 
-  initFlot: action(function(element) {
-    this._initFlot(element);
-
+  didInsertElement() {
+    this._super(...arguments);
     this.onHoverModeUpdate();
 
     this.placeholder.on('plotclick', (event, pos) => {
       this.set('time', pos.x / 1000);
     });
-  }),
+  },
 
   didUpdateAttrs() {
     this._super(...arguments);

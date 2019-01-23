@@ -1,11 +1,12 @@
 import Component from '@ember/component';
-import { action } from '@ember/object';
 import { equal } from '@ember/object/computed';
 
 import safeComputed from '../computed/safe-computed';
 
 export default Component.extend({
-  tagName: '',
+  tagName: 'tr',
+  classNames: ['selectable'],
+  classNameBindings: ['selected'],
 
   phase: null,
   selection: null,
@@ -24,7 +25,7 @@ export default Component.extend({
     return selection.start === phase.secondsOfDay && selection.end === phase.secondsOfDay + phase.duration;
   }),
 
-  handleClick: action(function() {
+  click() {
     let onSelect = this.onSelect;
 
     if (this.selected) {
@@ -36,5 +37,5 @@ export default Component.extend({
         end: phase.secondsOfDay + phase.duration,
       });
     }
-  }),
+  },
 });

@@ -1,9 +1,11 @@
 import Component from '@ember/component';
-import { action, computed } from '@ember/object';
+import { computed } from '@ember/object';
 import { htmlSafe } from '@ember/template';
 
 export default Component.extend({
-  tagName: '',
+  tagName: 'tr',
+  classNameBindings: ['selected', 'selectable'],
+
   selectable: false,
 
   badgeStyle: computed('row.color', function() {
@@ -16,9 +18,9 @@ export default Component.extend({
     },
   },
 
-  handleClick: action(function() {
+  click() {
     if (this.selectable) {
       this.onSelect(this.get('row.id'));
     }
-  }),
+  },
 });

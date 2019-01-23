@@ -5,7 +5,11 @@ import { inject as service } from '@ember/service';
 export default Component.extend({
   notifications: service(),
   intl: service(),
-  tagName: '',
+
+  tagName: 'span',
+  classNames: ['badge'],
+  classNameBindings: ['notifications.hasUnread:badge-warning'],
+  attributeBindings: ['title'],
 
   title: computed('intl.locale', function() {
     return this.intl.t('notifications');

@@ -1,17 +1,21 @@
 import Component from '@ember/component';
-import { action } from '@ember/object';
 
 export default Component.extend({
-  tagName: '',
+  classNames: ['CesiumSwitcher', 'ol-unselectable'],
+
   enabled: false,
   onEnable() {},
   onDisable() {},
 
-  toggle: action(function() {
+  click() {
+    this.toggle();
+  },
+
+  toggle() {
     if (this.enabled) {
       this.onDisable();
     } else {
       this.onEnable();
     }
-  }),
+  },
 });

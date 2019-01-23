@@ -1,5 +1,5 @@
 import Component from '@ember/component';
-import { action, computed } from '@ember/object';
+import { computed } from '@ember/object';
 import { inject as service } from '@ember/service';
 import { htmlSafe } from '@ember/template';
 
@@ -8,7 +8,6 @@ import $ from 'jquery';
 export default Component.extend({
   units: service(),
 
-  tagName: '',
   layoutName: 'components/base-barogram',
 
   height: 133,
@@ -28,11 +27,8 @@ export default Component.extend({
     }
   }),
 
-  initFlot: action(function(element) {
-    this._initFlot(element);
-  }),
-
-  _initFlot(element) {
+  didInsertElement() {
+    this._super(...arguments);
     let units = this.units;
 
     let opts = {
@@ -73,7 +69,7 @@ export default Component.extend({
       };
     }
 
-    let placeholder = $(element);
+    let placeholder = $(this.element.querySelector('div'));
 
     this.set('placeholder', placeholder);
     this.set('flot', $.plot(placeholder, [], opts));

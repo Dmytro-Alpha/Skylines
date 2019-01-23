@@ -4,9 +4,9 @@ import { inject as service } from '@ember/service';
 import { task } from 'ember-concurrency';
 
 export default Component.extend({
-  tagName: '',
-
   session: service(),
+
+  classNameBindings: ['inline::panel-body'],
 
   inline: false,
   error: null,
