@@ -1,14 +1,12 @@
 import Component from '@ember/component';
-import { action, computed } from '@ember/object';
+import { computed } from '@ember/object';
 
-export default class extends Component {
-  tagName = '';
+export default Component.extend({
+  tagName: '',
+  nearFlights: null,
+  visibleFlights: null,
 
-  nearFlights = null;
-  visibleFlights = null;
-
-  @computed('nearFlights.[]', 'visibleFlights.[]')
-  get nearFlightsWithColors() {
+  nearFlightsWithColors: computed('nearFlights.[]', 'visibleFlights.[]', function () {
     let { nearFlights, visibleFlights } = this;
     return nearFlights.map(it => {
       let id = it.flight.id;
@@ -20,10 +18,11 @@ export default class extends Component {
         times: it.times,
       };
     });
-  }
+  }),
 
-  @action
-  select(id) {
-    this.onSelect(id);
-  }
-}
+  actions: {
+    select(id) {
+      this.onSelect(id);
+    },
+  },
+});

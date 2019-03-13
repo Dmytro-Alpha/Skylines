@@ -2,25 +2,23 @@ import Component from '@ember/component';
 import { action, computed } from '@ember/object';
 import { htmlSafe } from '@ember/template';
 
-export default class extends Component {
-  tagName = '';
+export default Component.extend({
+  tagName: '',
+  selectable: false,
 
-  selectable = false;
-
-  @computed('row.color')
-  get badgeStyle() {
+  badgeStyle: computed('row.color', function () {
     return htmlSafe(`background-color: ${this.row.color}`);
-  }
+  }),
 
-  @action
-  remove() {
-    this.onRemove(this.get('row.id'));
-  }
+  actions: {
+    remove() {
+      this.onRemove(this.get('row.id'));
+    },
+  },
 
-  @action
-  handleClick() {
+  handleClick: action(function () {
     if (this.selectable) {
       this.onSelect(this.get('row.id'));
     }
-  }
-}
+  }),
+});

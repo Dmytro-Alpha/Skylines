@@ -12,8 +12,11 @@ import flightFromData from '../utils/flight-from-data';
  */
 const COLORS = ['#004bbd', '#bf0099', '#cf7c00', '#ff0000', '#00c994', '#ffff00'];
 
-export default class FixCalc extends EmberObject {
-  flights = slFlightCollection.create();
+export default EmberObject.extend({
+  ajax: null,
+  units: null,
+
+  // flights: [],
 
   /*
    * Global time, can be:
@@ -22,28 +25,32 @@ export default class FixCalc extends EmberObject {
    * >= 0 -> show the associated time in the barogram and on the map
    * @type {!Number}
    */
-  time = null;
+  time: null,
 
   /**
    * Default time - the time to set when no time is set
    * @type {!Number}
    */
-  defaultTime = null;
+  defaultTime: null,
 
-  timer = null;
+  timer: null,
 
-  @bool('timer') isRunning;
+  isRunning: bool('timer'),
 
-  @mapBy('flights', 'startTime') startTimes;
-  @min('startTimes') minStartTime;
+  startTimes: mapBy('flights', 'startTime'),
+  minStartTime: min('startTimes'),
 
-  @mapBy('flights', 'endTime') endTimes;
-  @max('endTimes') maxEndTime;
+  endTimes: mapBy('flights', 'endTime'),
+  maxEndTime: max('endTimes'),
 
-  @map('flights', function (flight) {
+  fixes: map('flights', function (flight) {
     return Fix.create({ flight, fixCalc: this });
-  })
-  fixes;
+  }),
+
+  init() {
+    this._super(...arguments);
+    this.set('flights', slFlightCollection.create());
+  },
 
   startPlayback() {
     let time = this.time;
@@ -53,7 +60,7 @@ export default class FixCalc extends EmberObject {
     }
 
     this.set('timer', later(this, 'onTick', 50));
-  }
+  },
 
   stopPlayback() {
     let timer = this.timer;
@@ -61,7 +68,7 @@ export default class FixCalc extends EmberObject {
       cancel(timer);
       this.set('timer', null);
     }
-  }
+  },
 
   togglePlayback() {
     if (this.isRunning) {
@@ -69,7 +76,7 @@ export default class FixCalc extends EmberObject {
     } else {
       this.startPlayback();
     }
-  }
+  },
 
   onTick() {
     let time = this.time + 1;
@@ -80,11 +87,11 @@ export default class FixCalc extends EmberObject {
 
     this.set('time', time);
     this.set('timer', later(this, 'onTick', 50));
-  }
+  },
 
   resetTime() {
     this.set('time', this.defaultTime);
-  }
+  },
 
   /**
    * Add a flight to the map and barogram.
@@ -103,7 +110,7 @@ export default class FixCalc extends EmberObject {
     }
 
     flights.pushObject(flight);
-  }
+  },
 
   /**
    * Perform a JSON request to get a flight.
@@ -117,5 +124,5 @@ export default class FixCalc extends EmberObject {
     if (!flights.findBy('id', data.sfid)) {
       this.addFlight(data);
     }
-  }
-}
+  },
+});
