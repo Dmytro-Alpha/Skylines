@@ -91,7 +91,8 @@
     "node": ">= 4"
   },
   "resolutions": {
-    "ember-concurrency": "^1.2.1"
+    "ember-concurrency": "^1.2.1",
+    "ember-intl/intl": "andyearnshaw/Intl.js"
   },
   "ember-addon": {
     "paths": [
