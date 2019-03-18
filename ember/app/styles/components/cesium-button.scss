@@ -1,8 +1,8 @@
-.play-button {
+.CesiumSwitcher {
   z-index: 1005 !important;
 
   position: absolute;
-  top: 50px;
+  top: 126px;
   right: 12px;
   padding: 2px;
 
@@ -13,8 +13,8 @@
   box-shadow: 0 0 8px rgba(50,50,50,0.3);
 
   cursor: pointer;
+}
 
-  &:hover {
-    background: white;
-  }
+.CesiumSwitcher:hover {
+  background: white;
 }

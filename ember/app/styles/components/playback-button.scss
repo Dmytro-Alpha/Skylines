@@ -1,16 +1,10 @@
-.fullscreen-button {
-  z-index: 1006 !important;
+.PlayButton {
+  z-index: 1005 !important;
 
   position: absolute;
-  top: 88px;
+  top: 50px;
   right: 12px;
-  padding: 0;
-
-  width: 32px;
-  height: 32px;
-
-  font-size: 26px;
-  line-height: 30px;
+  padding: 2px;
 
   background: white;
   background: rgba(255,255,255,0.7);
@@ -19,8 +13,8 @@
   box-shadow: 0 0 8px rgba(50,50,50,0.3);
 
   cursor: pointer;
+}
 
-  &:hover {
-    background: white;
-  }
+.PlayButton:hover {
+  background: white;
 }

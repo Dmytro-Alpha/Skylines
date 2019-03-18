@@ -4,28 +4,17 @@
 
 let EmberApp = require('ember-cli/lib/broccoli/ember-app');
 
-const CssModules = require('./build/css-modules');
-
 module.exports = function (defaults) {
   let environment = process.env.EMBER_ENV;
-  let isProduction = environment === 'production';
 
   let pluginsToBlacklist = [];
-  if (isProduction) {
+  if (environment === 'production') {
     pluginsToBlacklist.push('ember-freestyle', 'freestyle');
   }
 
   let app = new EmberApp(defaults, {
     addons: {
       blacklist: pluginsToBlacklist,
-    },
-
-    cssModules: {
-      extension: 'module.scss',
-      intermediateOutputPath: 'app/styles/_css-modules.scss',
-      generateScopedName(className, modulePath) {
-        return CssModules.generateName(className, modulePath, { isProduction });
-      },
     },
 
     fingerprint: {
