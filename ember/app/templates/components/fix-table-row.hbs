@@ -9,35 +9,35 @@
     </span>
   </td>
   <td>
-    {{#if (eq row.fix.time undefined)}}
+    {{#if (is-undefined row.fix.time)}}
       --:--:--
     {{else}}
       {{format-time (multiply row.fix.time 1000) format="hhmmss" timeZone="UTC"}}
     {{/if}}
   </td>
   <td>
-    {{#if (eq row.fix.alt-msl undefined)}}
+    {{#if (is-undefined row.fix.alt-msl)}}
       --
     {{else}}
       {{format-altitude row.fix.alt-msl}} <small>MSL</small>
     {{/if}}
   </td>
   <td>
-    {{#if (eq row.fix.alt-gnd undefined)}}
+    {{#if (is-undefined row.fix.alt-gnd)}}
       --
     {{else}}
       {{format-altitude row.fix.alt-gnd}} <small>GND</small>
     {{/if}}
   </td>
   <td>
-    {{#if (eq row.fix.vario undefined)}}
+    {{#if (is-undefined row.fix.vario)}}
       --
     {{else}}
       {{format-lift row.fix.vario}}
     {{/if}}
   </td>
   <td>
-    {{#if (eq row.fix.speed undefined)}}
+    {{#if (is-undefined row.fix.speed)}}
       --
     {{else}}
       {{format-speed row.fix.speed}}
