@@ -1,11 +1,15 @@
+import Helper from '@ember/component/helper';
+import { observer } from '@ember/object';
 import { inject as service } from '@ember/service';
 
-import BaseHelper from 'ember-intl/helpers/-format-base';
+export default Helper.extend({
+  units: service(),
 
-export default class extends BaseHelper {
-  @service units;
+  altitudeUnitObserver: observer('units.altitudeUnit', function () {
+    this.recompute();
+  }),
 
-  format(value, options) {
+  compute([value], options) {
     return this.units.formatAltitude(value, options);
-  }
-}
+  },
+});
