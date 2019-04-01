@@ -5,30 +5,28 @@ import Ember from 'ember';
 
 import { task, timeout } from 'ember-concurrency';
 
-export default class Notifications extends Service {
-  @service ajax;
+export default Service.extend({
+  ajax: service(),
 
-  counter = 0;
-  @gt('counter', 0) hasUnread;
+  counter: 0,
+  hasUnread: gt('counter', 0),
 
-  @computed('counter')
-  get counterText() {
+  counterText: computed('counter', function () {
     let counter = this.counter;
     return counter > 10 ? '10+' : counter;
-  }
+  }),
 
-  constructor() {
-    super(...arguments);
+  init() {
+    this._super(...arguments);
     this.updateTask.perform();
-  }
+  },
 
-  @(task(function* () {
+  updateTask: task(function* () {
     // eslint-disable-next-line no-constant-condition
     while (!Ember.testing) {
       let { events } = yield this.ajax.request('/api/notifications');
       this.set('counter', events.filter(it => it.unread).length);
       yield timeout(60000);
     }
-  }).drop())
-  updateTask;
-}
+  }).drop(),
+});
