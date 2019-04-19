@@ -1,55 +1,57 @@
+import Component from '@ember/component';
 import { readOnly } from '@ember/object/computed';
-
-import Component from '@glimmer/component';
 
 import safeComputed from '../computed/safe-computed';
 
-export default class extends Component {
-  firstPage = 1;
+export default Component.extend({
+  tagName: '',
+  count: 0,
+  page: 1,
+  perPage: 100,
+  firstPage: 1,
 
-  @safeComputed('args.count', 'args.perPage', (count, perPage) => Math.ceil(count / perPage)) pages;
-  @readOnly('pages') lastPage;
+  pages: safeComputed('count', 'perPage', (count, perPage) => Math.ceil(count / perPage)),
+  lastPage: readOnly('pages'),
 
-  @safeComputed('args.page', 'firstPage', (page, firstPage) => Math.max(firstPage, page - 1)) prevPage;
-  @safeComputed('args.page', 'firstPage', (page, firstPage) => page <= firstPage) prevDisabled;
+  prevPage: safeComputed('page', 'firstPage', (page, firstPage) => Math.max(firstPage, page - 1)),
+  prevDisabled: safeComputed('page', 'firstPage', (page, firstPage) => page <= firstPage),
 
-  @safeComputed('args.page', 'lastPage', (page, lastPage) => Math.min(lastPage, page + 1)) nextPage;
-  @safeComputed('args.page', 'lastPage', (page, lastPage) => page >= lastPage) nextDisabled;
+  nextPage: safeComputed('page', 'lastPage', (page, lastPage) => Math.min(lastPage, page + 1)),
+  nextDisabled: safeComputed('page', 'lastPage', (page, lastPage) => page >= lastPage),
 
-  @safeComputed(
-    'args.page',
+  showMinusFour: safeComputed(
+    'page',
     'firstPage',
     'lastPage',
     (page, firstPage, lastPage) => page - 4 >= firstPage && page === lastPage,
-  )
-  showMinusFour;
+  ),
 
-  @safeComputed(
-    'args.page',
+  showMinusThree: safeComputed(
+    'page',
     'firstPage',
     'lastPage',
     (page, firstPage, lastPage) => page - 3 >= firstPage && page >= lastPage - 1,
-  )
-  showMinusThree;
+  ),
 
-  @safeComputed('args.page', 'firstPage', (page, firstPage) => page - 2 >= firstPage) showMinusTwo;
-  @safeComputed('args.page', 'firstPage', (page, firstPage) => page - 1 >= firstPage) showMinusOne;
-  @safeComputed('args.page', 'lastPage', (page, lastPage) => page + 1 <= lastPage) showPlusOne;
-  @safeComputed('args.page', 'lastPage', (page, lastPage) => page + 2 <= lastPage) showPlusTwo;
+  showMinusTwo: safeComputed('page', 'firstPage', (page, firstPage) => page - 2 >= firstPage),
 
-  @safeComputed(
-    'args.page',
+  showMinusOne: safeComputed('page', 'firstPage', (page, firstPage) => page - 1 >= firstPage),
+
+  showPlusOne: safeComputed('page', 'lastPage', (page, lastPage) => page + 1 <= lastPage),
+
+  showPlusTwo: safeComputed('page', 'lastPage', (page, lastPage) => page + 2 <= lastPage),
+
+  showPlusThree: safeComputed(
+    'page',
     'lastPage',
     'firstPage',
     (page, lastPage, firstPage) => page + 3 <= lastPage && page <= firstPage + 1,
-  )
-  showPlusThree;
+  ),
 
-  @safeComputed(
-    'args.page',
+  showPlusFour: safeComputed(
+    'page',
     'lastPage',
     'firstPage',
     (page, lastPage, firstPage) => page + 4 <= lastPage && page === firstPage,
-  )
-  showPlusFour;
-}
+  ),
+});

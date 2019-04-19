@@ -1,9 +1,12 @@
+import Component from '@ember/component';
 import { mapBy, max, readOnly } from '@ember/object/computed';
 
-import Component from '@glimmer/component';
+export default Component.extend({
+  tagName: '',
+  years: null,
+  sumPilots: null,
 
-export default class StatsPilotsTable extends Component {
-  @mapBy('args.years', 'pilots') pilots;
-  @max('pilots') max;
-  @readOnly('args.sumPilots') sum;
-}
+  pilots: mapBy('years', 'pilots'),
+  max: max('pilots'),
+  sum: readOnly('sumPilots'),
+});
