@@ -3,10 +3,13 @@
 import { inject as service } from '@ember/service';
 
 import Component from '@glimmer/component';
+import { tracked } from '@glimmer/tracking';
 import ol from 'openlayers';
 
 export default class MapClickHandler extends Component {
   @service ajax;
+
+  @tracked coordinate;
 
   /**
    * The OpenLayers.Geometry object of the circle.
@@ -55,55 +58,67 @@ export default class MapClickHandler extends Component {
 
     let infobox = this.infobox;
     let infobox_element = $(infobox.getElement());
-    let coordinate = event.coordinate;
+    this.coordinate = event.coordinate;
 
-    let flights = this.args.flights;
-    if (flights) {
-      let flight_path_source = flights.get('source');
-      let closest_feature = flight_path_source.getClosestFeatureToCoordinate(coordinate);
+    let closest = this.findClosestFlightPoint(this.coordinate);
+    if (closest) {
+      let { feature, closestPoint } = closest;
 
-      if (closest_feature !== null) {
-        let geometry = closest_feature.getGeometry();
-        let closest_point = geometry.getClosestPoint(coordinate);
+      let time = closestPoint[3];
+      let sfid = feature.get('sfid');
+      let flight = this.args.flights.findBy('id', sfid);
 
-        let feature_pixel = event.map.getPixelFromCoordinate(closest_point);
-        let mouse_pixel = event.map.getPixelFromCoordinate(coordinate);
+      // flight info
+      let flight_info = this.flightInfo(flight);
+      infobox_element.append(flight_info);
 
-        let squared_distance =
-          Math.pow(mouse_pixel[0] - feature_pixel[0], 2) + Math.pow(mouse_pixel[1] - feature_pixel[1], 2);
+      // near flights link
+      let loc = ol.proj.transform(closestPoint, 'EPSG:3857', 'EPSG:4326');
+      let get_near_flights = this.nearFlights(loc[0], loc[1], time, flight);
+      infobox_element.append(get_near_flights);
 
-        if (squared_distance < 100) {
-          let time = closest_point[3];
-          let sfid = closest_feature.get('sfid');
-          let flight = flights.findBy('id', sfid);
-
-          // flight info
-          let flight_info = this.flightInfo(flight);
-          infobox_element.append(flight_info);
-
-          // near flights link
-          let loc = ol.proj.transform(closest_point, 'EPSG:3857', 'EPSG:4326');
-          let get_near_flights = this.nearFlights(loc[0], loc[1], time, flight);
-          infobox_element.append(get_near_flights);
-
-          coordinate = closest_point;
-        }
-      }
+      this.coordinate = closestPoint;
     }
 
     // location info
-    let loc = ol.proj.transform(coordinate, 'EPSG:3857', 'EPSG:4326');
+    let loc = ol.proj.transform(this.coordinate, 'EPSG:3857', 'EPSG:4326');
     let get_location_info = this.locationInfo(loc[0], loc[1]);
     infobox_element.append(get_location_info);
 
     event.map.addOverlay(infobox);
-    infobox.setPosition(coordinate);
-    this.showCircle(coordinate);
+    infobox.setPosition(this.coordinate);
+    this.showCircle(this.coordinate);
 
     this.visible = true;
 
     // stop bubbeling
     return false;
+  }
+
+  findClosestFlightPoint(coordinate) {
+    let { flights, map } = this.args;
+    if (!flights || !map) {
+      return;
+    }
+
+    let { source } = flights;
+    let feature = source.getClosestFeatureToCoordinate(coordinate);
+    if (!feature) {
+      return;
+    }
+
+    let geometry = feature.getGeometry();
+    let closestPoint = geometry.getClosestPoint(coordinate);
+
+    let inputPixel = map.getPixelFromCoordinate(coordinate);
+    let featurePixel = map.getPixelFromCoordinate(closestPoint);
+
+    let dx = inputPixel[0] - featurePixel[0];
+    let dy = inputPixel[1] - featurePixel[1];
+    let squaredDistance = dx * dx + dy * dy;
+    if (squaredDistance < 100) {
+      return { feature, closestPoint };
+    }
   }
 
   /**
