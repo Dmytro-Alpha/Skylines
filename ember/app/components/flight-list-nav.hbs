@@ -1,4 +1,4 @@
-<BsNav @type="pills" local-class="flight-list-nav" as |nav|>
+<BsNav @type="pills" as |nav|>
   <nav.item>
     {{#nav.link-to "flights.all"}}{{t "all"}}{{/nav.link-to}}
   </nav.item>
@@ -11,50 +11,23 @@
 
   {{#if (or (not date) latest)}}
     <nav.item>
-      <nav.linkTo
-        @route="flights.latest"
-        {{on "click" this.maybePreventDefault}}
-        {{on-click-outside this.closeDatePicker}}
-      >
+      {{#nav.link-to "flights.latest"}}
         {{#if date}}
           {{format-date date format="ddmmyyyy" timeZone="UTC"}}
         {{else}}
           {{t "latest"}}
         {{/if}}
-        <EmberFlatpickr
-          @date={{or this.date null}}
-          @getFlatpickrRef={{action (mut this.flatpickr)}}
-          @onChange={{action "dateSelected"}}
-          @static={{true}}
-          local-class="datepicker"
-        />
-        <button type="button" local-class="datepicker-button" {{on "click" this.openDatePicker}}>
-          {{fa-icon "calendar"}}
-        </button>
-      </nav.linkTo>
+        &nbsp;<DatePicker @date={{date}} @onSelect={{action "dateSelected"}}>{{fa-icon "calendar"}}</DatePicker>
+      {{/nav.link-to}}
     </nav.item>
   {{/if}}
 
   {{#if (and date (not latest))}}
     <nav.item>
-      <nav.linkTo
-        @route="flights.date"
-        @model={{date}}
-        {{on "click" this.maybePreventDefault}}
-        {{on-click-outside this.closeDatePicker}}
-      >
+      {{#nav.link-to "flights.date" date}}
         {{format-date date format="ddmmyyyy" timeZone="UTC"}}
-        <EmberFlatpickr
-          @date={{date}}
-          @getFlatpickrRef={{action (mut this.flatpickr)}}
-          @onChange={{action "dateSelected"}}
-          @static={{true}}
-          local-class="datepicker"
-        />
-        <button type="button" local-class="datepicker-button" {{on "click" this.openDatePicker}}>
-          {{fa-icon "calendar"}}
-        </button>
-      </nav.linkTo>
+        &nbsp;<DatePicker @date={{date}} @onSelect={{action "dateSelected"}}>{{fa-icon "calendar"}}</DatePicker>
+      {{/nav.link-to}}
     </nav.item>
   {{/if}}
 
