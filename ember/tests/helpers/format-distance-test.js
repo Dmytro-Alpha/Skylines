@@ -1,7 +1,8 @@
 import { render, settled } from '@ember/test-helpers';
 import { setupRenderingTest } from 'ember-qunit';
-import hbs from 'htmlbars-inline-precompile';
 import { module, test } from 'qunit';
+
+import hbs from 'htmlbars-inline-precompile';
 
 module('Helper | format-distance', function (hooks) {
   setupRenderingTest(hooks);

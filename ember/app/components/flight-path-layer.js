@@ -1,5 +1,4 @@
 import Component from '@glimmer/component';
-
 import ol from 'openlayers';
 
 const DEFAULT_COLOR = '#004bbd';

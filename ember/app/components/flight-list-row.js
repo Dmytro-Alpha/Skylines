@@ -1,4 +1,5 @@
 import { or, equal, not } from '@ember/object/computed';
+
 import Component from '@glimmer/component';
 
 export default class FlightListRow extends Component {

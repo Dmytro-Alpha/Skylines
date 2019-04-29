@@ -1,5 +1,4 @@
 import Component from '@glimmer/component';
-
 import ol from 'openlayers';
 
 export default class FlightPathLayerFeature extends Component {

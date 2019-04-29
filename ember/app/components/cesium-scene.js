@@ -2,7 +2,6 @@
 
 import Component from '@glimmer/component';
 import { tracked } from '@glimmer/tracking';
-
 import olcs from 'ol-cesium';
 
 import config from 'skylines/config/environment';
