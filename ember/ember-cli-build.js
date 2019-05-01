@@ -57,6 +57,20 @@ module.exports = function (defaults) {
       importBootstrapCSS: false,
     },
 
+    'ember-font-awesome': {
+      includeStaticIcons: [
+        'arrow-left',
+        'arrow-right',
+        'calendar',
+        'chevron-down',
+        'chevron-up',
+        'clock-o',
+        'facebook',
+        'google-plus',
+        'twitter',
+      ],
+    },
+
     freestyle: {
       snippetSearchPaths: ['lib/freestyle/app'],
     },
@@ -87,11 +101,6 @@ module.exports = function (defaults) {
   app.import('bower_components/Flot/jquery.flot.resize.js');
   app.import('bower_components/flot-marks/src/jquery.flot.marks.js');
   app.import('vendor/jquery.flot.flight-upload.js');
-
-  app.import({
-    development: 'node_modules/bigscreen/bigscreen.js',
-    production: 'node_modules/bigscreen/bigscreen.min.js',
-  });
 
   app.import({
     development: 'node_modules/sidebar-v2/js/jquery-sidebar.js',
