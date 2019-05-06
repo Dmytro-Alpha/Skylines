@@ -16,18 +16,6 @@ export default Component.extend({
       this.updateLayers();
       this.set('open', true);
     },
-
-    select(layer) {
-      let mapSettings = this.mapSettings;
-
-      if (layer.isBaseLayer) {
-        mapSettings.setBaseLayer(layer.name);
-      } else {
-        mapSettings.toggleOverlayLayer(layer.name);
-      }
-
-      this.updateLayers();
-    },
   },
 
   updateLayers() {
@@ -43,11 +31,11 @@ export default Component.extend({
 
     this.set(
       'baseLayers',
-      layers.filter(layer => layer.isBaseLayer),
+      layers.filter(layer => layer.isBaseLayer).map(it => it.name),
     );
     this.set(
       'overlayLayers',
-      layers.filter(layer => !layer.isBaseLayer),
+      layers.filter(layer => !layer.isBaseLayer).map(it => it.name),
     );
   },
 });
