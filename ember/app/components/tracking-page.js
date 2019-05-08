@@ -16,8 +16,6 @@ export default class extends Component {
 
   fixCalc = FixCalc.create({ ajax: this.ajax, units: this.units });
 
-  defaultTab = window.innerWidth >= 768 ? 'overview' : null;
-
   @computed('mapExtent', 'cesiumEnabled', 'fixCalc.flights.[]')
   get timeInterval() {
     if (this.cesiumEnabled) {
@@ -46,6 +44,7 @@ export default class extends Component {
     let fixCalc = this.fixCalc;
 
     let sidebar = this.rootElement.querySelector('#sidebar');
+    let $sidebar = $(sidebar).sidebar();
 
     let barogramPanel = this.rootElement.querySelector('#barogram_panel');
     let $barogramPanel = $(barogramPanel);
@@ -64,6 +63,12 @@ export default class extends Component {
 
     resize();
     $barogramPanel.resize(resize);
+
+    if (window.location.hash && sidebar.querySelector(`li > a[href="#${window.location.hash.substring(1)}"]`)) {
+      $sidebar.open(window.location.hash.substring(1));
+    } else if (window.innerWidth >= 768 && flights.length > 1) {
+      $sidebar.open('tab-overview');
+    }
 
     let map = window.flightMap.get('map');
 
