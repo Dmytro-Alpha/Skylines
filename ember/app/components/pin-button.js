@@ -1,16 +1,18 @@
+import Component from '@ember/component';
 import { action, computed } from '@ember/object';
 import { inject as service } from '@ember/service';
-import Component from '@glimmer/component';
 
 export default class PinButton extends Component {
   @service pinnedFlights;
 
-  @computed('pinnedFlights.pinned.[]', 'args.flightId')
+  tagName = '';
+
+  @computed('pinnedFlights.pinned.[]', 'flightId')
   get pinned() {
-    return this.pinnedFlights.pinned.includes(this.args.flightId);
+    return this.pinnedFlights.pinned.includes(this.flightId);
   }
 
   @action toggle() {
-    this.pinnedFlights.toggle(this.args.flightId);
+    this.pinnedFlights.toggle(this.flightId);
   }
 }
