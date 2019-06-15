@@ -3,11 +3,26 @@ import { action, observer } from '@ember/object';
 import { readOnly } from '@ember/object/computed';
 import { once } from '@ember/runloop';
 
-import { boundingExtent } from 'ol/extent';
 import Icon from 'ol/style/Icon';
 import Style from 'ol/style/Style';
 
 import computedPoint from '../computed/computed-point';
+
+const START_ICON = new Icon({
+  anchor: [0.5, 1],
+  src: '/images/marker-green.png',
+});
+
+const END_ICON = new Icon({
+  anchor: [0.5, 1],
+  src: '/images/marker.png',
+});
+
+START_ICON.load();
+END_ICON.load();
+
+const START_STYLE = new Style({ image: START_ICON });
+const END_STYLE = new Style({ image: END_ICON });
 
 export default Component.extend({
   tagName: '',
@@ -15,7 +30,6 @@ export default Component.extend({
   map: null,
   paddingFn: null,
   coordinates: null,
-  calculatePadding() {},
 
   startCoordinate: readOnly('coordinates.firstObject'),
   endCoordinate: readOnly('coordinates.lastObject'),
@@ -24,30 +38,11 @@ export default Component.extend({
   endPoint: computedPoint('coordinates.lastObject'),
 
   coordinatesObserver: observer('coordinates.[]', function () {
-    this.adjustMapView();
     once(this.map, 'render');
   }),
 
   init() {
     this._super(...arguments);
-
-    let startIcon = new Icon({
-      anchor: [0.5, 1],
-      src: '/images/marker-green.png',
-    });
-    startIcon.load();
-
-    let endIcon = new Icon({
-      anchor: [0.5, 1],
-      src: '/images/marker.png',
-    });
-    endIcon.load();
-
-    let startStyle = new Style({ image: startIcon });
-    this.set('startStyle', startStyle);
-
-    let endStyle = new Style({ image: endIcon });
-    this.set('endStyle', endStyle);
 
     // activate coordinatesObserver
     this.get('coordinates');
@@ -69,24 +64,14 @@ export default Component.extend({
   },
 
   renderMarkers(context) {
-    this.renderMarker(context, this.startStyle, this.startPoint);
-    this.renderMarker(context, this.endStyle, this.endPoint);
+    this.renderMarker(context, START_STYLE, this.startPoint);
+    this.renderMarker(context, END_STYLE, this.endPoint);
   },
 
   renderMarker(context, style, coordinate) {
     if (coordinate) {
       context.setStyle(style);
       context.drawGeometry(coordinate);
-    }
-  },
-
-  adjustMapView() {
-    let coordinates = this.coordinates;
-    if (coordinates) {
-      let map = this.map;
-      let extent = boundingExtent(coordinates);
-      let padding = this.calculatePadding();
-      map.getView().fit(extent, { padding });
     }
   },
 });
