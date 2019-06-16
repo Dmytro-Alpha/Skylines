@@ -1,8 +1,6 @@
 import { action } from '@ember/object';
 import { inject as service } from '@ember/service';
 
-import { boundingExtent } from 'ol/extent';
-
 import BaseMapComponent from './base-map';
 
 export default class FlightMap extends BaseMapComponent {
@@ -76,13 +74,5 @@ export default class FlightMap extends BaseMapComponent {
   @action disableCesium() {
     this.set('cesiumEnabled', false);
     this.onCesiumEnabledChange(false);
-  }
-
-  @action zoomToPhase([coordinates, calculatePadding]) {
-    if (coordinates) {
-      let extent = boundingExtent(coordinates);
-      let padding = calculatePadding();
-      this.map.getView().fit(extent, { padding });
-    }
   }
 }
