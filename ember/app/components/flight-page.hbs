@@ -46,7 +46,7 @@
     @phaseHighlightCoords={{this.highlightedCoordinates}}
     @hoverEnabled={{not (or fixCalc.isRunning cesiumEnabled)}}
     @defaultTime={{fixCalc.defaultTime}}
-    @onTimeChange={{this.fixCalc.setTime}}
+    @onTimeChange={{action (mut fixCalc.time)}}
     @onExtentChange={{action (mut mapExtent)}}
     @onCesiumEnabledChange={{action (mut cesiumEnabled)}}
     @addFlight={{action "addFlight"}}
@@ -75,8 +75,6 @@
       @timeInterval={{timeInterval}}
       @timeHighlight={{this.highlightedTimeInterval}}
       @time={{fixCalc.time}}
-      @defaultTime={{fixCalc.defaultTime}}
-      @onTimeChange={{this.fixCalc.setTime}}
-    />
+      @defaultTime={{fixCalc.defaultTime}} />
   </div>
 </div>

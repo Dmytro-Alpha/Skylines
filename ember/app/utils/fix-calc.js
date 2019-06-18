@@ -1,6 +1,5 @@
-import EmberObject, { action } from '@ember/object';
+import EmberObject from '@ember/object';
 import { bool, mapBy, min, max, map } from '@ember/object/computed';
-import { tracked } from '@glimmer/tracking';
 
 import { task } from 'ember-concurrency';
 
@@ -20,14 +19,14 @@ const PLAYBACK_SPEED = 50;
 export default class FixCalc extends EmberObject {
   flights = slFlightCollection.create();
 
-  /**
+  /*
    * Global time, can be:
-   * - null -> no time is set, don't show barogram crosshair/plane position
-   * - -1 -> always show the latest time/fix for each flight
-   * - >= 0 -> show the associated time in the barogram and on the map
+   * null -> no time is set, don't show barogram crosshair/plane position
+   * -1 -> always show the latest time/fix for each flight
+   * >= 0 -> show the associated time in the barogram and on the map
    * @type {!Number}
    */
-  @tracked time = null;
+  time = null;
 
   /**
    * Default time - the time to set when no time is set
@@ -52,7 +51,7 @@ export default class FixCalc extends EmberObject {
     let time = this.time;
 
     if (time === null || time === -1) {
-      this.setTime(this.minStartTime);
+      this.set('time', this.minStartTime);
     }
 
     let lastNow = performance.now();
@@ -69,7 +68,7 @@ export default class FixCalc extends EmberObject {
         this.stopPlayback();
       }
 
-      this.setTime(time);
+      this.set('time', time);
     }
   }).drop())
   playbackTask;
@@ -89,9 +88,8 @@ export default class FixCalc extends EmberObject {
       this.startPlayback();
     }
   }
-
-  @action setTime(time) {
-    this.time = time;
+  resetTime() {
+    this.set('time', this.defaultTime);
   }
 
   /**
