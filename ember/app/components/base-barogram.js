@@ -2,7 +2,6 @@ import Component from '@ember/component';
 import { action, computed } from '@ember/object';
 import { map } from '@ember/object/computed';
 import { inject as service } from '@ember/service';
-import { htmlSafe } from '@ember/template';
 
 import $ from 'jquery';
 
@@ -10,8 +9,6 @@ export default Component.extend({
   units: service(),
 
   tagName: '',
-
-  height: 133,
 
   flot: null,
 
@@ -21,12 +18,6 @@ export default Component.extend({
 
   contests: null,
   elevations: null,
-
-  flotStyle: computed('height', function () {
-    if (this.height) {
-      return htmlSafe(`width: 100%; height: ${this.height}px;`);
-    }
-  }),
 
   initFlot: action(function (element) {
     this._initFlot(element);
@@ -80,17 +71,12 @@ export default Component.extend({
     this.set('flot', $.plot(placeholder, [], opts));
   },
 
-  draw() {
-    this.update();
-
+  draw: action(function () {
     let flot = this.flot;
+    flot.setData(this.data);
     flot.setupGrid();
     flot.draw();
-  },
-
-  update() {
-    this.flot.setData(this.data);
-  },
+  }),
 
   data: computed('elevations.[]', 'activeTraces.[]', 'passiveTraces.[]', 'enlData.[]', 'contestData.[]', function () {
     let elevations = {
@@ -173,10 +159,4 @@ export default Component.extend({
     let options = this.flot.getOptions();
     options.grid.markings = markings;
   }),
-
-  actions: {
-    redraw() {
-      this.draw();
-    },
-  },
 });
