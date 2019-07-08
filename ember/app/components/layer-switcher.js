@@ -1,14 +1,22 @@
+import Component from '@ember/component';
 import { inject as service } from '@ember/service';
-import Component from '@glimmer/component';
-import { tracked } from '@glimmer/tracking';
 
 import { BASE_LAYERS, OVERLAY_LAYERS } from '../services/map-settings';
 
-export default class LayerSwitcher extends Component {
-  @service mapSettings;
+export default Component.extend({
+  tagName: '',
 
-  @tracked open = false;
+  mapSettings: service(),
 
-  BASE_LAYERS = BASE_LAYERS;
-  OVERLAY_LAYERS = OVERLAY_LAYERS;
-}
+  map: null,
+  open: false,
+
+  BASE_LAYERS,
+  OVERLAY_LAYERS,
+
+  actions: {
+    open() {
+      this.set('open', true);
+    },
+  },
+});

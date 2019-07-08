@@ -1,10 +1,12 @@
+import Component from '@ember/component';
 import { action, computed } from '@ember/object';
-import Component from '@glimmer/component';
 
 export default class extends Component {
-  @computed('args.fixes.@each.flight')
+  tagName = '';
+
+  @computed('fixes.@each.flight')
   get data() {
-    return this.args.fixes.map((fix, i) => {
+    return this.fixes.map((fix, i) => {
       let flight = fix.get('flight');
       let id = flight.get('id');
       let color = flight.get('color');
@@ -21,6 +23,6 @@ export default class extends Component {
 
   @action
   select(id) {
-    this.args.onSelectionChange(this.args.selection === id ? null : id);
+    this.set('selection', this.selection === id ? null : id);
   }
 }
